@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>KISR QA Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 30px; }
+    input, textarea, select, button {
+      display: block; margin-bottom: 10px; width: 400px; max-width: 100%;
+    }
+    table { border-collapse: collapse; width: 100%; margin-top: 30px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h2>KISR QA — Initial Check Form</h2>
+
+  <button onclick="logout()">🚪 Logout</button>
+
+  <div id="form">
+    <input type="text" id="hrid" placeholder="HRID (e.g. in55398)" />
+    <input type="text" id="cataloguer" placeholder="Cataloguer Name" />
+    <input type="date" id="dateIn" />
+    <input type="text" id="errorFields" placeholder="Error Fields (e.g. 245, 902)" />
+    <textarea id="errorDescription" placeholder="Error Description"></textarea>
+    <input type="date" id="dateOut" />
+    <select id="status">
+      <option value="Ok">Ok</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <input type="text" id="qaBy" placeholder="QA Done By" />
+    <button onclick="submitEntry()">✅ Submit Entry</button>
+    <p id="msg"></p>
+  </div>
+
+  <h3>📋 Submitted Entries</h3>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>HRID</th>
+        <th>Cataloguer</th>
+        <th>Status</th>
+        <th>QA By</th>
+        <th>Date In</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+ const firebaseConfig = {
+  apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+  authDomain: "kisr-qa-dashboard.firebaseapp.com",
+  projectId: "kisr-qa-dashboard"
+};
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        loadEntries();
+      }
+    });
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+
+    async function submitEntry() {
+      const msg = document.getElementById("msg");
+      msg.textContent = "Submitting...";
+
+      const data = {
+        hrid: document.getElementById("hrid").value.trim(),
+        cataloguer: document.getElementById("cataloguer").value.trim(),
+        dateIn: document.getElementById("dateIn").value,
+        errorFields: document.getElementById("errorFields").value.split(',').map(e => e.trim()),
+        errorDescription: document.getElementById("errorDescription").value.trim(),
+        dateOut: document.getElementById("dateOut").value,
+        status: document.getElementById("status").value,
+        qaBy: document.getElementById("qaBy").value.trim(),
+        createdAt: new Date()
+      };
+
+      try {
+        await db.collection("initial_checks").add(data);
+        msg.textContent = "✅ Entry added!";
+        document.getElementById("form").reset();
+        loadEntries(); // Refresh table
+      } catch (error) {
+        msg.textContent = "❌ Error: " + error.message;
+      }
+    }
+
+    async function loadEntries() {
+      const tableBody = document.querySelector("#dataTable tbody");
+      tableBody.innerHTML = "";
+
+      try {
+        const snapshot = await db.collection("initial_checks").orderBy("createdAt", "desc").limit(50).get();
+        snapshot.forEach(doc => {
+          const e = doc.data();
+          const row = `
+            <tr>
+              <td>${e.hrid || ""}</td>
+              <td>${e.cataloguer || ""}</td>
+              <td>${e.status || ""}</td>
+              <td>${e.qaBy || ""}</td>
+              <td>${e.dateIn || ""}</td>
+            </tr>`;
+          tableBody.innerHTML += row;
+        });
+      } catch (err) {
+        console.error("❌ Error loading entries:", err);
+      }
+    }
+  </script>
+</body>
+</html>
