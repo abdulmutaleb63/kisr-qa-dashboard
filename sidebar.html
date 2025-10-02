@@ -1,26 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>KISR QA Login</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <div class="login-container">
-    <h2>KISR QA Dashboard — Login</h2>
-    <form id="login-form">
-      <input type="email" id="email" placeholder="KISR Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">🔐 Login</button>
-      <p id="login-msg"></p>
-    </form>
-  </div>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
-  <script src="js/firebase.js"></script>
-  <script src="js/auth.js"></script>
-</body>
-</html>
-
+<!-- sidebar.html -->
+<div style="width: 200px; padding: 20px; background: #f1f1f1; height: 100vh;">
+  <h3>KISR QA<br>Dashboard</h3>
+  <nav>
+    <ul style="list-style: none; padding: 0;">
+      <li><a href="initial.html">Initial Check</a></li>
+      <li><a href="final.html">Final Check</a></li>
+      <li><a href="stats.html">Statistics</a></li>
+      <li><a href="#" onclick="logout()">Logout</a></li>
+    </ul>
+  </nav>
+</div>
