@@ -1,90 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>KISR QA Login</title>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .login-container {
-      background: white;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    input, button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      background-color: #007BFF;
-      color: white;
-      border: none;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #msg {
-      color: red;
-      font-weight: bold;
-      text-align: center;
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="login-container">
-    <h2>KISR QA Login</h2>
-    <input type="email" id="email" placeholder="KISR Email" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button onclick="login()">Login</button>
-    <p id="msg"></p>
+    <h2>KISR QA Dashboard — Login</h2>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="KISR Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">🔐 Login</button>
+      <p id="login-msg"></p>
+    </form>
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
-      authDomain: "kisr-qa-dashboard.firebaseapp.com",
-      projectId: "kisr-qa-dashboard"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("msg");
-
-      if (!email.endsWith("@kisr.edu.kw")) {
-        msg.textContent = "Only KISR emails are allowed.";
-        return;
-      }
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          window.location.href = "initial.html"; // will create this page next
-        })
-        .catch((error) => {
-          msg.textContent = "❌ " + error.message;
-        });
-    }
-  </script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>
+
 
 
