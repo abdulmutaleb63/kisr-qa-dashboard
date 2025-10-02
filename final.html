@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Final Check</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; margin-left: 220px; }
+    input, textarea, select, button { display: block; margin-bottom: 10px; width: 400px; max-width: 100%; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    iframe { position: fixed; left: 0; top: 0; height: 100%; width: 200px; border: none; }
+  </style>
+</head>
+<body>
+  <iframe src="sidebar.html"></iframe>
+  <h2>Final Check Submission</h2>
+
+  <form id="finalForm">
+    <input type="text" id="hrid" placeholder="HRID" required />
+    <input type="text" id="cataloguer" placeholder="Cataloguer" required />
+    <input type="date" id="dateIn" required />
+    <input type="text" id="errorFields" placeholder="Error Fields (e.g. 245, 902)" />
+    <textarea id="errorDescription" placeholder="Error Description"></textarea>
+    <input type="date" id="dateOut" required />
+    <select id="status">
+      <option value="Ok">Ok</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <input type="text" id="qaBy" placeholder="QA" required />
+    <button type="submit">Submit</button>
+    <p id="msg"></p>
+  </form>
+
+  <h3>Submitted Entries</h3>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Entry No.</th>
+        <th>HRID</th>
+        <th>Cataloguer</th>
+        <th>Date In</th>
+        <th>Error Fields</th>
+        <th>Error Description</th>
+        <th>Date Out</th>
+        <th>Status</th>
+        <th>QA</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "index.html";
+      else loadEntries();
+    });
+
+    document.getElementById("finalForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("msg");
+      msg.textContent = "Submitting...";
+
+      const data = {
+        hrid: document.getElementById("hrid").value.trim(),
+        cataloguer: document.getElementById("cataloguer").value.trim(),
+        dateIn: document.getElementById("dateIn").value,
+        errorFields: document.getElementById("errorFields").value,
+        errorDescription: document.getElementById("errorDescription").value,
+        dateOut: document.getElementById("dateOut").value,
+        status: document.getElementById("status").value,
+        qaBy: document.getElementById("qaBy").value.trim(),
+        createdAt: new Date()
+      };
+
+      try {
+        await db.collection("final_checks").add(data);
+        msg.textContent = "✅ Entry added!";
+        e.target.reset();
+        loadEntries();
+      } catch (error) {
+        msg.textContent = "❌ Error: " + error.message;
+      }
+    });
+
+    async function loadEntries() {
+      const tableBody = document.querySelector("#dataTable tbody");
+      tableBody.innerHTML = ""; 
+
+      try {
+        const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").get();
+        let i = 1;
+        snapshot.forEach(doc => {
+          const e = doc.data();
+          const row = `
+            <tr>
+              <td>${i++}</td>
+              <td>${e.hrid}</td>
+              <td>${e.cataloguer}</td>
+              <td>${e.dateIn}</td>
+              <td>${e.errorFields}</td>
+              <td>${e.errorDescription}</td>
+              <td>${e.dateOut}</td>
+              <td>${e.status}</td>
+              <td>${e.qaBy}</td>
+              <td><button onclick="deleteEntry('${doc.id}')">Delete</button></td>
+            </tr>`;
+          tableBody.innerHTML += row;
+        });
+      } catch (err) {
+        console.error("❌ Error loading entries:", err);
+      }
+    }
+
+    async function deleteEntry(id) {
+      if (confirm("Delete this entry?")) {
+        await db.collection("final_checks").doc(id).delete();
+        loadEntries();
+      }
+    }
+  </script>
+</body>
+</html>
