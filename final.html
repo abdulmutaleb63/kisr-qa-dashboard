@@ -7,46 +7,97 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 30px; }
-    input, textarea, select, button {
-      display: block; margin-bottom: 10px; width: 400px; max-width: 100%;
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      display: flex;
     }
-    table { border-collapse: collapse; width: 100%; margin-top: 30px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .sidebar {
+      width: 220px;
+      background: #333;
+      color: white;
+      height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .sidebar h2 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      display: block;
+      margin: 10px 0;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+    }
+    input, textarea, select, button {
+      display: block;
+      margin-bottom: 10px;
+      width: 400px;
+      max-width: 100%;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 30px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    .actions button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
-  <h2>KISR QA — Final Check Form</h2>
-
-  <button onclick="logout()">🚪 Logout</button>
-
-  <div id="form">
-    <input type="text" id="hrid" placeholder="HRID (e.g. in55398)" />
-    <input type="text" id="cataloguer" placeholder="Cataloguer Name" />
-    <input type="date" id="dateIn" />
-    <textarea id="notes" placeholder="Final QA Notes"></textarea>
-    <select id="status">
-      <option value="Ok">Ok</option>
-      <option value="Rejected">Rejected</option>
-    </select>
-    <input type="text" id="qaBy" placeholder="QA Done By" />
-    <button onclick="submitEntry()">✅ Submit Entry</button>
-    <p id="msg"></p>
+  <div class="sidebar">
+    <h2>KISR QA</h2>
+    <a href="dashboard.html">Initial Check</a>
+    <a href="final.html">Final Check</a>
+    <a href="#">Statistics</a>
+    <a href="#">Report (coming soon)</a>
+    <button onclick="logout()" style="margin-top:20px;">🚪 Logout</button>
   </div>
+  <div class="content">
+    <h2>Final Check Form</h2>
 
-  <h3>📋 Submitted Final QA Entries</h3>
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th>HRID</th>
-        <th>Cataloguer</th>
-        <th>Status</th>
-        <th>QA By</th>
-        <th>Date In</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <div id="form">
+      <input type="text" id="hrid" placeholder="HRID (e.g. in55398)" />
+      <input type="text" id="cataloguer" placeholder="Cataloguer Name" />
+      <input type="date" id="dateIn" />
+      <textarea id="notes" placeholder="Final QA Notes"></textarea>
+      <select id="status">
+        <option value="Ok">Ok</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+      <input type="text" id="qaBy" placeholder="QA Done By" />
+      <button onclick="submitEntry()">✅ Submit Entry</button>
+      <p id="msg"></p>
+    </div>
+
+    <h3>📋 Submitted Final QA Entries</h3>
+    <input type="text" id="filterQA" placeholder="Filter by QA By..." oninput="loadEntries()" />
+    <input type="text" id="filterStatus" placeholder="Filter by Status..." oninput="loadEntries()" />
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>HRID</th>
+          <th>Cataloguer</th>
+          <th>Status</th>
+          <th>QA By</th>
+          <th>Date In</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -103,9 +154,19 @@
       }
     }
 
+    async function deleteEntry(id) {
+      if (confirm("Delete this entry?")) {
+        await db.collection("final_checks").doc(id).delete();
+        loadEntries();
+      }
+    }
+
     async function loadEntries() {
       const tableBody = document.querySelector("#dataTable tbody");
       tableBody.innerHTML = "";
+
+      const filterQA = document.getElementById("filterQA").value.toLowerCase();
+      const filterStatus = document.getElementById("filterStatus").value.toLowerCase();
 
       try {
         const snapshot = await db.collection("final_checks")
@@ -115,15 +176,23 @@
 
         snapshot.forEach(doc => {
           const e = doc.data();
-          const row = `
-            <tr>
-              <td>${e.hrid || ""}</td>
-              <td>${e.cataloguer || ""}</td>
-              <td>${e.status || ""}</td>
-              <td>${e.qaBy || ""}</td>
-              <td>${e.dateIn || ""}</td>
-            </tr>`;
-          tableBody.innerHTML += row;
+          const id = doc.id;
+
+          if ((filterQA && !e.qaBy?.toLowerCase().includes(filterQA)) ||
+              (filterStatus && !e.status?.toLowerCase().includes(filterStatus))) return;
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${e.hrid || ""}</td>
+            <td>${e.cataloguer || ""}</td>
+            <td>${e.status || ""}</td>
+            <td>${e.qaBy || ""}</td>
+            <td>${e.dateIn || ""}</td>
+            <td class="actions">
+              <button onclick="deleteEntry(\"${id}\")">🗑 Delete</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
         });
       } catch (err) {
         console.error("❌ Error loading entries:", err);
@@ -132,4 +201,3 @@
   </script>
 </body>
 </html>
-
