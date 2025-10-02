@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>KISR QA Login</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 30px; }
+    input, button { display: block; margin: 10px 0; width: 300px; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email (e.g. @kisr.edu.kw)" />
+  <input type="password" id="password" placeholder="Password" />
+  <button onclick="login()">Login</button>
+  <p id="msg"></p>
+
+  <script>
+ const firebaseConfig = {
+  apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+  authDomain: "kisr-qa-dashboard.firebaseapp.com",
+  projectId: "kisr-qa-dashboard"
+};
+    firebase.initializeApp(firebaseConfig);
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const msg = document.getElementById("msg");
+
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        msg.textContent = "❌ " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
