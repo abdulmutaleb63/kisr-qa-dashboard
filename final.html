@@ -1,138 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Final QA — Submission Form</title>
+  <meta charset="UTF-8" />
+  <title>Final QA Check</title>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <style>
-    body { font-family: sans-serif; display: flex; margin: 0; }
-    #sidebar { width: 250px; background: #f5f5f5; padding: 20px; border-right: 1px solid #ccc; }
-    #main { flex-grow: 1; padding: 30px; }
-    input, textarea, select, button { display: block; margin-bottom: 10px; width: 400px; max-width: 100%; }
-    table { border-collapse: collapse; width: 100%; margin-top: 30px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    .action-btn { cursor: pointer; }
+    body { font-family: sans-serif; margin: 0; }
+    input, textarea, select, button {
+      display: block;
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    .main-container {
+      display: flex;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+    }
   </style>
 </head>
 <body>
+<div class="main-container">
   <div id="sidebar"></div>
-  <div id="main">
+  <div class="content">
     <h2>Final QA — Submission Form</h2>
-    <form id="entryForm">
-      <input type="text" id="hrid" placeholder="HRID" required />
-      <input type="text" id="cataloguer" placeholder="Cataloguer" required />
-      <input type="date" id="dateIn" placeholder="Date in" required />
-      <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-      <textarea id="errorDescription" placeholder="Error Description"></textarea>
-      <input type="date" id="dateOut" placeholder="Date out" />
-      <select id="status">
-        <option value="Ok">Ok</option>
-        <option value="Rejected">Rejected</option>
-      </select>
-      <input type="text" id="qa" placeholder="QA" required />
-      <button type="submit">Submit</button>
-    </form>
+
+    <input type="text" id="hrid" placeholder="HRID" />
+    <input type="text" id="cataloguer" placeholder="Cataloguer" />
+    <input type="date" id="dateIn" />
+    <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+    <textarea id="errorDescription" placeholder="Error Description"></textarea>
+    <input type="date" id="dateOut" />
+    <select id="status">
+      <option value="Ok">Ok</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <input type="text" id="qa" placeholder="QA" />
+    <button onclick="submitEntry()">Submit</button>
     <p id="msg"></p>
 
-    <h3>📋 Submitted Entries</h3>
+    <h3>📄 Submitted Entries</h3>
     <table id="dataTable">
       <thead>
         <tr>
           <th>Entry No.</th>
           <th>HRID</th>
           <th>Cataloguer</th>
-          <th>Date In</th>
+          <th>Date in</th>
           <th>Error fields</th>
           <th>Error Description</th>
           <th>Date Out</th>
           <th>Status</th>
           <th>QA</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
+</div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
-      authDomain: "kisr-qa-dashboard.firebaseapp.com",
-      projectId: "kisr-qa-dashboard"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+<script>
+  // Load sidebar
+  fetch("sidebar.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("sidebar").innerHTML = html;
+    });
 
-    auth.onAuthStateChanged(user => {
-      if (!user) return location.href = 'index.html';
-      loadSidebar();
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+    authDomain: "kisr-qa-dashboard.firebaseapp.com",
+    projectId: "kisr-qa-dashboard"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "index.html";
+    } else {
       loadEntries();
-    });
-
-    function loadSidebar() {
-      fetch("sidebar.html")
-        .then(res => res.text())
-        .then(html => document.getElementById("sidebar").innerHTML = html)
-        .catch(() => document.getElementById("sidebar").innerHTML = "❌ Failed to load sidebar");
     }
+  });
 
-    document.getElementById("entryForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("msg");
-      msg.textContent = "Submitting...";
+  function logout() {
+    auth.signOut().then(() => window.location.href = "index.html");
+  }
 
-      const data = {
-        hrid: document.getElementById("hrid").value.trim(),
-        cataloguer: document.getElementById("cataloguer").value.trim(),
-        dateIn: document.getElementById("dateIn").value,
-        errorFields: document.getElementById("errorFields").value.trim(),
-        errorDescription: document.getElementById("errorDescription").value.trim(),
-        dateOut: document.getElementById("dateOut").value,
-        status: document.getElementById("status").value,
-        qa: document.getElementById("qa").value.trim(),
-        createdAt: new Date()
-      };
+  async function submitEntry() {
+    const msg = document.getElementById("msg");
+    msg.textContent = "Submitting...";
 
-      try {
-        await db.collection("final_checks").add(data);
-        msg.textContent = "✅ Entry added!";
-        document.getElementById("entryForm").reset();
-        loadEntries();
-      } catch (error) {
-        msg.textContent = "❌ Error: " + error.message;
-      }
-    });
+    const data = {
+      hrid: document.getElementById("hrid").value.trim(),
+      cataloguer: document.getElementById("cataloguer").value.trim(),
+      dateIn: document.getElementById("dateIn").value,
+      errorFields: document.getElementById("errorFields").value.trim(),
+      errorDescription: document.getElementById("errorDescription").value.trim(),
+      dateOut: document.getElementById("dateOut").value,
+      status: document.getElementById("status").value,
+      qa: document.getElementById("qa").value.trim(),
+      createdAt: new Date()
+    };
 
-    async function loadEntries() {
-      const tableBody = document.querySelector("#dataTable tbody");
-      tableBody.innerHTML = "";
+    try {
+      await db.collection("final_checks").add(data);
+      msg.textContent = "✅ Entry added!";
+      document.querySelector(".content").querySelectorAll("input, textarea, select").forEach(e => e.value = "");
+      loadEntries();
+    } catch (err) {
+      msg.textContent = "❌ Error: " + err.message;
+    }
+  }
+
+  async function loadEntries() {
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
+
+    try {
       const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").limit(50).get();
       let count = 1;
       snapshot.forEach(doc => {
-        const e = doc.data();
+        const d = doc.data();
         const row = `
           <tr>
             <td>${count++}</td>
-            <td>${e.hrid || ""}</td>
-            <td>${e.cataloguer || ""}</td>
-            <td>${e.dateIn || ""}</td>
-            <td>${e.errorFields || ""}</td>
-            <td>${e.errorDescription || ""}</td>
-            <td>${e.dateOut || ""}</td>
-            <td>${e.status || ""}</td>
-            <td>${e.qa || ""}</td>
-            <td>
-              <button class="action-btn">✏️</button>
-              <button class="action-btn">🗑️</button>
-            </td>
+            <td>${d.hrid || ""}</td>
+            <td>${d.cataloguer || ""}</td>
+            <td>${d.dateIn || ""}</td>
+            <td>${d.errorFields || ""}</td>
+            <td>${d.errorDescription || ""}</td>
+            <td>${d.dateOut || ""}</td>
+            <td>${d.status || ""}</td>
+            <td>${d.qa || ""}</td>
           </tr>`;
-        tableBody.innerHTML += row;
+        tbody.innerHTML += row;
       });
+    } catch (err) {
+      console.error("Error loading entries:", err);
     }
-  </script>
+  }
+</script>
 </body>
 </html>
+
 
