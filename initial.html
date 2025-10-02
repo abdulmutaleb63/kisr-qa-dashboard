@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Initial Check</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; display: flex; margin: 0; }
+    #sidebar { width: 220px; border-right: 1px solid #ccc; min-height: 100vh; padding: 20px; background: #f7f7f7; }
+    #main { flex: 1; padding: 30px; }
+    input, textarea, select, button {
+      display: block; margin-bottom: 10px; width: 100%; max-width: 400px;
+    }
+    table { border-collapse: collapse; width: 100%; margin-top: 30px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .actions button { margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <div id="sidebar"></div>
+  <div id="main">
+    <h2>Initial QA — Submission Form</h2>
+    <form id="entryForm">
+      <input type="text" id="hrid" placeholder="HRID" required />
+      <input type="text" id="cataloguer" placeholder="Cataloguer" required />
+      <input type="date" id="dateIn" placeholder="Date in" required />
+      <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+      <textarea id="errorDescription" placeholder="Error Description"></textarea>
+      <input type="date" id="dateOut" placeholder="Date Out" />
+      <select id="status">
+        <option value="Ok">Ok</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+      <input type="text" id="qa" placeholder="QA" required />
+      <button type="submit">Submit</button>
+      <p id="msg"></p>
+    </form>
+
+    <h3>📋 Submitted Entries</h3>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Entry No.</th>
+          <th>HRID</th>
+          <th>Cataloguer</th>
+          <th>Date In</th>
+          <th>Error fields</th>
+          <th>Error Description</th>
+          <th>Date Out</th>
+          <th>Status</th>
+          <th>QA</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Load sidebar
+    fetch('sidebar.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('sidebar').innerHTML = html);
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = 'index.html';
+      else loadEntries();
+    });
+
+    // Submit form
+    document.getElementById('entryForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      msg.textContent = "Submitting...";
+
+      const data = {
+        hrid: hrid.value.trim(),
+        cataloguer: cataloguer.value.trim(),
+        dateIn: dateIn.value,
+        errorFields: errorFields.value,
+        errorDescription: errorDescription.value.trim(),
+        dateOut: dateOut.value,
+        status: status.value,
+        qa: qa.value.trim(),
+        createdAt: new Date()
+      };
+
+      try {
+        await db.collection("initial_checks").add(data);
+        msg.textContent = "✅ Entry added!";
+        document.getElementById("entryForm").reset();
+        loadEntries();
+      } catch (err) {
+        msg.textContent = "❌ Error: " + err.message;
+      }
+    });
+
+    async function loadEntries() {
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = "";
+      const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
+      let index = 1;
+      snap.forEach(doc => {
+        const d = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${index++}</td>
+          <td>${d.hrid}</td>
+          <td>${d.cataloguer}</td>
+          <td>${d.dateIn}</td>
+          <td>${d.errorFields}</td>
+          <td>${d.errorDescription}</td>
+          <td>${d.dateOut}</td>
+          <td>${d.status}</td>
+          <td>${d.qa}</td>
+          <td class="actions">
+            <button onclick="editEntry('${doc.id}')">✏️</button>
+            <button onclick="deleteEntry('${doc.id}')">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function deleteEntry(id) {
+      if (confirm("Delete this entry?")) {
+        await db.collection("initial_checks").doc(id).delete();
+        loadEntries();
+      }
+    }
+
+    function editEntry(id) {
+      alert("✏️ Edit feature coming next");
+    }
+  </script>
+</body>
+</html>
