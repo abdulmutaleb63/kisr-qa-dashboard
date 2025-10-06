@@ -107,26 +107,31 @@
 
   async function submitEntry() {
     const msg = document.getElementById("msg");
+
     const data = {
       hrid: hrid.value.trim(),
       cataloguer: cataloguer.value.trim(),
-      dateIn: dateIn.value,
+      dateIn: dateIn.value || "",
       errorFields: errorFields.value.trim(),
       errorDescription: errorDescription.value.trim(),
-      dateOut: dateOut.value,
-      status: status.value,
-      qa: qa.value.trim(),
-      createdAt: new Date()
+      dateOut: dateOut.value || "",
+      status: status.value || "Ok",
+      qa: qa.value.trim()
     };
 
     try {
       if (editingId) {
+        // UPDATE existing doc
         await db.collection("final_checks").doc(editingId).update(data);
         msg.textContent = "✅ Entry updated!";
         editingId = null;
         document.getElementById("submitBtn").textContent = "Submit";
       } else {
-        await db.collection("final_checks").add(data);
+        // ADD new doc with createdAt
+        await db.collection("final_checks").add({
+          ...data,
+          createdAt: new Date()
+        });
         msg.textContent = "✅ Entry added!";
       }
       clearForm();
@@ -179,25 +184,26 @@
     }
   }
 
-async function editEntry(id) {
-  const doc = await db.collection("final_checks").doc(id).get();
-  if (!doc.exists) return;
+  async function editEntry(id) {
+    const doc = await db.collection("final_checks").doc(id).get();
+    if (!doc.exists) return;
 
-  const d = doc.data();
-  hrid.value = d.hrid || "";
-  cataloguer.value = d.cataloguer || "";
-  dateIn.value = d.dateIn || "";
-  errorFields.value = d.errorFields || "";
-  errorDescription.value = d.errorDescription || "";
-  dateOut.value = d.dateOut || "";
-  status.value = d.status || "Ok"; // 👈 fallback to 'Ok' if status is missing
-  qa.value = d.qa || "";
+    const d = doc.data();
+    hrid.value = d.hrid || "";
+    cataloguer.value = d.cataloguer || "";
+    dateIn.value = d.dateIn || "";
+    errorFields.value = d.errorFields || "";
+    errorDescription.value = d.errorDescription || "";
+    dateOut.value = d.dateOut || "";
+    status.value = d.status || "Ok";
+    qa.value = d.qa || "";
 
-  editingId = id;
-  document.getElementById("submitBtn").textContent = "Update";
-  document.getElementById("msg").textContent = "Editing entry...";
-}
+    editingId = id;
+    document.getElementById("submitBtn").textContent = "Update";
+    document.getElementById("msg").textContent = "Editing entry...";
+  }
 </script>
+
 </body>
 </html>
 
