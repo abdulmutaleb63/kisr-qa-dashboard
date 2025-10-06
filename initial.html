@@ -58,92 +58,102 @@
     </table>
   </div>
 
-  <script>
-    // Load sidebar
-    fetch('sidebar.html')
-      .then(res => res.text())
-      .then(html => document.getElementById('sidebar').innerHTML = html);
+<script>
+  // Load sidebar
+  fetch('sidebar.html')
+    .then(res => res.text())
+    .then(html => document.getElementById('sidebar').innerHTML = html);
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
-      authDomain: "kisr-qa-dashboard.firebaseapp.com",
-      projectId: "kisr-qa-dashboard"
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+    authDomain: "kisr-qa-dashboard.firebaseapp.com",
+    projectId: "kisr-qa-dashboard"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged(user => {
+    if (!user) window.location.href = 'index.html';
+    else loadEntries();
+  });
+
+  // Submit form
+  document.getElementById('entryForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    msg.textContent = "Submitting...";
+
+    // ✅ define all elements first
+    const hrid = document.getElementById("hrid");
+    const cataloguer = document.getElementById("cataloguer");
+    const dateIn = document.getElementById("dateIn");
+    const errorFields = document.getElementById("errorFields");
+    const errorDescription = document.getElementById("errorDescription");
+    const dateOut = document.getElementById("dateOut");
+    const status = document.getElementById("status");
+    const qa = document.getElementById("qa");
+
+    const data = {
+      hrid: hrid.value.trim(),
+      cataloguer: cataloguer.value.trim(),
+      dateIn: dateIn.value,
+      errorFields: errorFields.value,
+      errorDescription: errorDescription.value.trim(),
+      dateOut: dateOut.value,
+      status: status.value,
+      qa: qa.value.trim(),
+      createdAt: new Date()
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    auth.onAuthStateChanged(user => {
-      if (!user) window.location.href = 'index.html';
-      else loadEntries();
+    try {
+      await db.collection("initial_checks").add(data);
+      msg.textContent = "✅ Entry added!";
+      document.getElementById("entryForm").reset();
+      loadEntries();
+    } catch (err) {
+      msg.textContent = "❌ Error: " + err.message;
+    }
+  });
+
+  async function loadEntries() {
+    const tbody = document.querySelector('#dataTable tbody');
+    tbody.innerHTML = "";
+    const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
+    let index = 1;
+    snap.forEach(doc => {
+      const d = doc.data();
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index++}</td>
+        <td>${d.hrid || ""}</td>
+        <td>${d.cataloguer || ""}</td>
+        <td>${d.dateIn || ""}</td>
+        <td>${d.errorFields || ""}</td>
+        <td>${d.errorDescription || ""}</td>
+        <td>${d.dateOut || ""}</td>
+        <td>${d.status || ""}</td>
+        <td>${d.qa || ""}</td>
+        <td class="actions">
+          <button onclick="editEntry('${doc.id}')">✏️</button>
+          <button onclick="deleteEntry('${doc.id}')">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(row);
     });
+  }
 
-    // Submit form
-    document.getElementById('entryForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const msg = document.getElementById('msg');
-      msg.textContent = "Submitting...";
-
-      const data = {
-        hrid: hrid.value.trim(),
-        cataloguer: cataloguer.value.trim(),
-        dateIn: dateIn.value,
-        errorFields: errorFields.value,
-        errorDescription: errorDescription.value.trim(),
-        dateOut: dateOut.value,
-        status: status.value,
-        qa: qa.value.trim(),
-        createdAt: new Date()
-      };
-
-      try {
-        await db.collection("initial_checks").add(data);
-        msg.textContent = "✅ Entry added!";
-        document.getElementById("entryForm").reset();
-        loadEntries();
-      } catch (err) {
-        msg.textContent = "❌ Error: " + err.message;
-      }
-    });
-
-    async function loadEntries() {
-      const tbody = document.querySelector('#dataTable tbody');
-      tbody.innerHTML = "";
-      const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
-      let index = 1;
-      snap.forEach(doc => {
-        const d = doc.data();
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${index++}</td>
-          <td>${d.hrid}</td>
-          <td>${d.cataloguer}</td>
-          <td>${d.dateIn}</td>
-          <td>${d.errorFields}</td>
-          <td>${d.errorDescription}</td>
-          <td>${d.dateOut}</td>
-          <td>${d.status}</td>
-          <td>${d.qa}</td>
-          <td class="actions">
-            <button onclick="editEntry('${doc.id}')">✏️</button>
-            <button onclick="deleteEntry('${doc.id}')">🗑️</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
+  async function deleteEntry(id) {
+    if (confirm("Delete this entry?")) {
+      await db.collection("initial_checks").doc(id).delete();
+      loadEntries();
     }
+  }
 
-    async function deleteEntry(id) {
-      if (confirm("Delete this entry?")) {
-        await db.collection("initial_checks").doc(id).delete();
-        loadEntries();
-      }
-    }
+  function editEntry(id) {
+    alert("✏️ Edit feature coming next");
+  }
+</script>
 
-    function editEntry(id) {
-      alert("✏️ Edit feature coming next");
-    }
-  </script>
-</body>
 </html>
