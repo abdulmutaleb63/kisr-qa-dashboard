@@ -195,7 +195,8 @@
     errorFields.value = d.errorFields || "";
     errorDescription.value = d.errorDescription || "";
     dateOut.value = d.dateOut || "";
-    status.value = d.status || "Ok";
+    const validStatuses = ["Ok", "Rejected"];
+    status.value = validStatuses.includes(d.status) ? d.status : "Ok";
     qa.value = d.qa || "";
 
     editingId = id;
