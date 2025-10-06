@@ -105,41 +105,49 @@
     auth.signOut().then(() => window.location.href = "index.html");
   }
 
-  async function submitEntry() {
-    const msg = document.getElementById("msg");
+async function submitEntry() {
+  const msg = document.getElementById("msg");
 
-    const data = {
-      hrid: hrid.value.trim(),
-      cataloguer: cataloguer.value.trim(),
-      dateIn: dateIn.value || "",
-      errorFields: errorFields.value.trim(),
-      errorDescription: errorDescription.value.trim(),
-      dateOut: dateOut.value || "",
-      status: status.value || "Ok",
-      qa: qa.value.trim()
-    };
+  // ✅ Explicitly define form elements
+  const hrid = document.getElementById("hrid");
+  const cataloguer = document.getElementById("cataloguer");
+  const dateIn = document.getElementById("dateIn");
+  const errorFields = document.getElementById("errorFields");
+  const errorDescription = document.getElementById("errorDescription");
+  const dateOut = document.getElementById("dateOut");
+  const status = document.getElementById("status"); // ✅ FIX
+  const qa = document.getElementById("qa");
 
-    try {
-      if (editingId) {
-        // UPDATE existing doc
-        await db.collection("final_checks").doc(editingId).update(data);
-        msg.textContent = "✅ Entry updated!";
-        editingId = null;
-        document.getElementById("submitBtn").textContent = "Submit";
-      } else {
-        // ADD new doc with createdAt
-        await db.collection("final_checks").add({
-          ...data,
-          createdAt: new Date()
-        });
-        msg.textContent = "✅ Entry added!";
-      }
-      clearForm();
-      loadEntries();
-    } catch (err) {
-      msg.textContent = "❌ Error: " + err.message;
+  const data = {
+    hrid: hrid.value.trim(),
+    cataloguer: cataloguer.value.trim(),
+    dateIn: dateIn.value,
+    errorFields: errorFields.value.trim(),
+    errorDescription: errorDescription.value.trim(),
+    dateOut: dateOut.value,
+    status: status.value,  // ✅ This was undefined before
+    qa: qa.value.trim(),
+    createdAt: new Date()
+  };
+
+  try {
+    if (editingId) {
+      await db.collection("final_checks").doc(editingId).update(data);
+      msg.textContent = "✅ Entry updated!";
+      editingId = null;
+      document.getElementById("submitBtn").textContent = "Submit";
+    } else {
+      await db.collection("final_checks").add(data);
+      msg.textContent = "✅ Entry added!";
     }
+
+    clearForm();
+    loadEntries();
+  } catch (err) {
+    msg.textContent = "❌ Error: " + err.message;
   }
+}
+
 
   function clearForm() {
     document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
