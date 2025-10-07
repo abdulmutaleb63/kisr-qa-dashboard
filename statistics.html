@@ -3,6 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <title>KISR QA Statistics</title>
+  <style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  .main-container {
+    display: flex;
+    min-height: 100vh;
+  }
+  #sidebar {
+    width: 220px;
+    background: #f2f2f2;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .content {
+    flex: 1;
+    padding: 30px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  table th, table td {
+    padding: 8px;
+    text-align: center;
+  }
+</style>
+
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
