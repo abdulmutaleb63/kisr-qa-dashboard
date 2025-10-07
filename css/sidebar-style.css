@@ -1,44 +1,31 @@
 /* sidebar-style.css */
-
-.sidebar-container {
-  display: flex;
-}
-
 .sidebar {
-  background-color: #f8f8f8;
   width: 220px;
-  min-height: 100vh;
-  padding: 20px 15px;
-  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
-  transition: width 0.3s ease;
-  position: relative;
+  background: #f1f1f1;
+  padding: 20px 10px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  height: 100vh;
+  transition: width 0.3s;
 }
 
 .sidebar.collapsed {
-  width: 60px;
+  width: 70px;
 }
 
 .sidebar .toggle-btn {
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 20px;
+  margin-bottom: 20px;
   cursor: pointer;
-  margin-bottom: 15px;
-  color: #004e92;
+  color: #333;
 }
 
 .sidebar h3 {
-  font-size: 18px;
-  color: #004e92;
-  margin: 0 0 25px 0;
-  line-height: 1.2;
-  transition: opacity 0.2s ease;
-}
-
-.sidebar.collapsed h3,
-.sidebar.collapsed .dashboard-label {
-  opacity: 0;
-  pointer-events: none;
+  margin: 0 0 30px;
+  font-size: 20px;
+  color: #333;
+  text-align: center;
 }
 
 .sidebar nav ul {
@@ -47,19 +34,29 @@
 }
 
 .sidebar nav ul li {
-  margin: 12px 0;
+  margin: 10px 0;
 }
 
 .sidebar nav ul li a {
-  text-decoration: none;
   color: #333;
-  display: block;
-  transition: padding-left 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  transition: 0.2s;
 }
 
-.sidebar.collapsed nav ul li a {
+.sidebar nav ul li a i {
+  width: 25px;
   text-align: center;
-  padding-left: 0;
+  font-size: 16px;
 }
 
-/* Optional: hide text but show icon if you add icons later */
+.sidebar nav ul li a:hover {
+  color: #007bff;
+}
+
+.sidebar.collapsed .label,
+.sidebar.collapsed .dashboard-label {
+  display: none;
+}
