@@ -7,6 +7,12 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  flex-direction: column;
+}
+
+.kisr-logo {
+  width: 120px;
+  margin-bottom: 20px;
 }
 
 .login-container {
