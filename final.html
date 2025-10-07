@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Final QA Check</title>
-  <link rel="stylesheet" href="css/initial.css">
+  <link rel="stylesheet" href="css/final.css">
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
@@ -13,28 +13,21 @@
     <div id="sidebar"></div>
     <div class="content">
       <h2>Final QA — Submission Form</h2>
+
       <form id="qaForm">
-        <div class="form-row">
-          <input type="text" id="hrid" placeholder="HRID" required />
-          <input type="text" id="cataloguer" placeholder="Cataloguer" required />
-          <input type="date" id="dateIn" required />
-        </div>
-        <div class="form-row">
-          <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-          <textarea id="errorDescription" placeholder="Error Description"></textarea>
-        </div>
-        <div class="form-row">
-          <input type="date" id="dateOut" />
-          <select id="status">
-            <option value="Ok">Ok</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-          <input type="text" id="qa" placeholder="QA" required />
-        </div>
-        <div class="form-actions">
-          <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
-          <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-        </div>
+        <input type="text" id="hrid" placeholder="HRID" />
+        <input type="text" id="cataloguer" placeholder="Cataloguer" />
+        <input type="date" id="dateIn" />
+        <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+        <textarea id="errorDescription" placeholder="Error Description"></textarea>
+        <input type="date" id="dateOut" />
+        <select id="status">
+          <option value="Ok">Ok</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+        <input type="text" id="qa" placeholder="QA" />
+        <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
+        <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
         <p id="msg"></p>
       </form>
 
@@ -45,7 +38,7 @@
             <th>Entry No.</th>
             <th>HRID</th>
             <th>Cataloguer</th>
-            <th>Date In</th>
+            <th>Date in</th>
             <th>Error fields</th>
             <th>Error Description</th>
             <th>Date Out</th>
@@ -181,6 +174,7 @@
 </script>
 </body>
 </html>
+
 
 
 
