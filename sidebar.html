@@ -1,20 +1,22 @@
 <!-- sidebar.html -->
 <link rel="stylesheet" href="css/sidebar-style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-<div class="sidebar-container">
-  <div class="sidebar collapsed" id="sidebar">
-    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-    <h3>KISR QA<br><span class="dashboard-label">Dashboard</span></h3>
-    <nav>
-      <ul>
-        <li><a href="initial.html">Initial Check</a></li>
-        <li><a href="final.html">Final Check</a></li>
-        <li><a href="stats.html">Statistics</a></li>
-        <li><a href="report.html">Report</a></li>
-        <li><a href="#" onclick="logout()">Logout</a></li>
-      </ul>
-    </nav>
-  </div>
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <h3 class="dashboard-label">KISR QA<br>Dashboard</h3>
+  <nav>
+    <ul>
+      <li><a href="initial.html"><i class="fas fa-clipboard-check"></i> <span class="label">Initial Check</span></a></li>
+      <li><a href="final.html"><i class="fas fa-clipboard-list"></i> <span class="label">Final Check</span></a></li>
+      <li><a href="stats.html"><i class="fas fa-chart-bar"></i> <span class="label">Statistics</span></a></li>
+      <li><a href="report.html"><i class="fas fa-file-alt"></i> <span class="label">Report</span></a></li>
+      <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="label">Logout</span></a></li>
+    </ul>
+  </nav>
 </div>
 
 <script>
