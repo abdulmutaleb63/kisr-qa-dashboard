@@ -60,13 +60,12 @@
     const auth = firebase.auth();
 
     const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-    const monthIndexes = [9,10,11,0,1,2]; // JS month indexes
+    const cataloguers = ['Mutaleb', 'Aziz'];
+    const collections = ['initial_checks', 'final_checks'];
 
     auth.onAuthStateChanged(async (user) => {
       if (!user) return window.location.href = "index.html";
       const tableBody = document.querySelector("#monthlyBreakdown tbody");
-      const cataloguers = ['Mutaleb', 'Aziz'];
-      const collections = ['initial_checks', 'final_checks'];
 
       const counts = {};
       cataloguers.forEach(name => {
@@ -80,32 +79,35 @@
       const end = new Date('2026-03-31');
 
       for (const collection of collections) {
-        const snap = await db.collection(collection).get();
-        snap.forEach(doc => {
-          const d = doc.data();
-          const who = d.doneBy;
-          const date = new Date(d.createdAt?.seconds * 1000 || d.createdAt);
-          if (!who || !cataloguers.includes(who) || isNaN(date)) return;
-          if (date < start || date > end) return;
+        const snapshot = await db.collection(collection).get();
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const who = data.qa;
+          const createdAt = data.createdAt;
+          if (!who || !createdAt || !cataloguers.includes(who)) return;
+
+          const date = createdAt.seconds ? new Date(createdAt.seconds * 1000) : new Date(createdAt);
+          if (isNaN(date) || date < start || date > end) return;
 
           const year = date.getFullYear();
-          const month = date.getMonth();
+          const month = date.getMonth(); // JS month index 0–11
 
           let index = -1;
-          if (year === 2025 && month >= 9) index = month - 9;  // Oct–Dec 2025
-          if (year === 2026 && month <= 2) index = month + 3;  // Jan–Mar 2026
-          if (index === -1) return;
+          if (year === 2025 && month >= 9) index = month - 9;     // Oct–Dec 2025 → 0–2
+          if (year === 2026 && month <= 2) index = month + 3;     // Jan–Mar 2026 → 3–5
+          if (index < 0 || index > 5) return;
 
           if (collection === 'initial_checks') counts[who].initial[index]++;
-          if (collection === 'final_checks') counts[who].final[index]++;
+          else if (collection === 'final_checks') counts[who].final[index]++;
         });
       }
 
+      // Render cataloguer rows
       cataloguers.forEach(name => {
         const init = counts[name].initial;
         const fin = counts[name].final;
-        const totalInit = init.reduce((a,b) => a+b, 0);
-        const totalFin = fin.reduce((a,b) => a+b, 0);
+        const totalInit = init.reduce((a, b) => a + b, 0);
+        const totalFin = fin.reduce((a, b) => a + b, 0);
         const grand = totalInit + totalFin;
 
         let row = `<tr><td>${name}</td>`;
@@ -117,26 +119,30 @@
         tableBody.innerHTML += row;
       });
 
-      // Totals row
-      const totalRow = [`<td>Total</td>`];
-      for (let i = 0; i < 6; i++) {
-        const sumInit = cataloguers.reduce((sum, name) => sum + counts[name].initial[i], 0);
-        totalRow.push(`<td>${sumInit}</td>`);
-      }
-      const totalInitAll = totalRow.slice(1).reduce((a,b) => a + parseInt(b.replace(/<[^>]+>/g, '')), 0);
-      totalRow.push(`<td>${totalInitAll}</td>`);
+      // Render totals row
+      let totalRow = `<tr><td>Total</td>`;
+      const initTotals = Array(6).fill(0);
+      const finTotals = Array(6).fill(0);
 
       for (let i = 0; i < 6; i++) {
-        const sumFin = cataloguers.reduce((sum, name) => sum + counts[name].final[i], 0);
-        totalRow.push(`<td>${sumFin}</td>`);
+        initTotals[i] = cataloguers.reduce((sum, name) => sum + counts[name].initial[i], 0);
+        totalRow += `<td>${initTotals[i]}</td>`;
       }
-      const totalFinAll = totalRow.slice(8,14).reduce((a,b) => a + parseInt(b.replace(/<[^>]+>/g, '')), 0);
-      totalRow.push(`<td>${totalFinAll}</td>`);
-      totalRow.push(`<td>${totalInitAll + totalFinAll}</td>`);
+      const initTotalSum = initTotals.reduce((a, b) => a + b, 0);
+      totalRow += `<td>${initTotalSum}</td>`;
 
-      tableBody.innerHTML += `<tr>${totalRow.join('')}</tr>`;
+      for (let i = 0; i < 6; i++) {
+        finTotals[i] = cataloguers.reduce((sum, name) => sum + counts[name].final[i], 0);
+        totalRow += `<td>${finTotals[i]}</td>`;
+      }
+      const finTotalSum = finTotals.reduce((a, b) => a + b, 0);
+      totalRow += `<td>${finTotalSum}</td>`;
+      totalRow += `<td>${initTotalSum + finTotalSum}</td></tr>`;
+
+      tableBody.innerHTML += totalRow;
     });
   </script>
 </body>
 </html>
+
 
