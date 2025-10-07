@@ -14,34 +14,36 @@
     <div id="main">
       <h2>Final QA — Submission Form</h2>
 
-   <form id="qaForm">
-  <div class="form-row">
-    <input type="text" id="hrid" placeholder="HRID" />
-    <input type="text" id="cataloguer" placeholder="Cataloguer" />
-    <input type="date" id="dateIn" />
-  </div>
+      <form id="qaForm">
+        <div class="form-row">
+          <input type="text" id="hrid" placeholder="HRID" />
+          <input type="text" id="cataloguer" placeholder="Cataloguer" />
+          <input type="date" id="dateIn" />
+        </div>
 
-  <div class="form-row">
-    <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-    <textarea id="errorDescription" placeholder="Error Description"></textarea>
-  </div>
+        <div class="form-row">
+          <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+          <textarea id="errorDescription" placeholder="Error Description"></textarea>
+        </div>
 
-  <div class="form-row">
-    <input type="date" id="dateOut" />
-    <select id="status">
-      <option value="Ok">Ok</option>
-      <option value="Rejected">Rejected</option>
-    </select>
-    <input type="text" id="qa" placeholder="QA" />
-  </div>
+        <div class="form-row">
+          <input type="date" id="dateOut" />
+          <select id="status">
+            <option value="Ok">Ok</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <input type="text" id="uuid" placeholder="UUID" />
+          <input type="text" id="title" placeholder="Title" />
+          <input type="text" id="qa" placeholder="QA" />
+        </div>
 
-  <div class="form-row">
-    <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
-    <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-  </div>
+        <div class="form-row">
+          <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
+          <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
+        </div>
 
-  <p id="msg"></p>
-</form>
+        <p id="msg"></p>
+      </form>
 
       <h3>Submitted Entries</h3>
       <table id="dataTable">
@@ -50,11 +52,13 @@
             <th>Entry No.</th>
             <th>HRID</th>
             <th>Cataloguer</th>
-            <th>Date in</th>
-            <th>Error fields</th>
+            <th>Date In</th>
+            <th>Error Fields</th>
             <th>Error Description</th>
             <th>Date Out</th>
             <th>Status</th>
+            <th>UUID</th>
+            <th>Title</th>
             <th>QA</th>
             <th>Actions</th>
           </tr>
@@ -94,6 +98,8 @@
         errorDescription: document.getElementById("errorDescription").value.trim(),
         dateOut: document.getElementById("dateOut").value,
         status: document.getElementById("status").value,
+        uuid: document.getElementById("uuid").value.trim(),
+        title: document.getElementById("title").value.trim(),
         qa: document.getElementById("qa").value.trim()
       };
 
@@ -139,6 +145,8 @@
             <td>${d.errorDescription || ""}</td>
             <td>${d.dateOut || ""}</td>
             <td>${d.status || ""}</td>
+            <td>${d.uuid || ""}</td>
+            <td>${d.title || ""}</td>
             <td>${d.qa || ""}</td>
             <td class="actions">
               <button onclick="editEntry('${doc.id}')">✏️</button>
@@ -168,6 +176,8 @@
       document.getElementById("errorDescription").value = d.errorDescription || "";
       document.getElementById("dateOut").value = d.dateOut || "";
       document.getElementById("status").value = d.status || "Ok";
+      document.getElementById("uuid").value = d.uuid || "";
+      document.getElementById("title").value = d.title || "";
       document.getElementById("qa").value = d.qa || "";
 
       editingId = id;
@@ -184,9 +194,10 @@
       document.getElementById("msg").textContent = "Edit cancelled.";
     }
   </script>
-   <script src="js/common.js"></script>
+  <script src="js/common.js"></script>
 </body>
 </html>
+
 
 
 
