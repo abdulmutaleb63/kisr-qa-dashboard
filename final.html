@@ -3,83 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <title>Final QA Check</title>
+  <link rel="stylesheet" href="css/initial.css">
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
-  <style>
-    body { font-family: sans-serif; margin: 0; }
-    input, textarea, select, button {
-      display: block;
-      margin-bottom: 10px;
-      width: 100%;
-      max-width: 400px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    .main-container {
-      display: flex;
-    }
-    .content {
-      flex: 1;
-      padding: 30px;
-    }
-    .actions button { margin-right: 5px; }
-    #cancelBtn {
-      display: none;
-      background: #999;
-      color: white;
-    }
-  </style>
 </head>
 <body>
-<div class="main-container">
-  <div id="sidebar"></div>
-  <div class="content">
-    <h2>Final QA — Submission Form</h2>
+  <div class="main-container">
+    <div id="sidebar"></div>
+    <div class="content">
+      <h2>Final QA — Submission Form</h2>
+      <form id="qaForm">
+        <div class="form-row">
+          <input type="text" id="hrid" placeholder="HRID" required />
+          <input type="text" id="cataloguer" placeholder="Cataloguer" required />
+          <input type="date" id="dateIn" required />
+        </div>
+        <div class="form-row">
+          <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+          <textarea id="errorDescription" placeholder="Error Description"></textarea>
+        </div>
+        <div class="form-row">
+          <input type="date" id="dateOut" />
+          <select id="status">
+            <option value="Ok">Ok</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <input type="text" id="qa" placeholder="QA" required />
+        </div>
+        <div class="form-actions">
+          <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
+          <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
+        </div>
+        <p id="msg"></p>
+      </form>
 
-    <input type="text" id="hrid" placeholder="HRID" />
-    <input type="text" id="cataloguer" placeholder="Cataloguer" />
-    <input type="date" id="dateIn" />
-    <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-    <textarea id="errorDescription" placeholder="Error Description"></textarea>
-    <input type="date" id="dateOut" />
-    <select id="status">
-      <option value="Ok">Ok</option>
-      <option value="Rejected">Rejected</option>
-    </select>
-    <input type="text" id="qa" placeholder="QA" />
-    <button id="submitBtn" onclick="submitEntry()">Submit</button>
-    <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-    <p id="msg"></p>
-
-    <h3>📄 Submitted Entries</h3>
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>Entry No.</th>
-          <th>HRID</th>
-          <th>Cataloguer</th>
-          <th>Date in</th>
-          <th>Error fields</th>
-          <th>Error Description</th>
-          <th>Date Out</th>
-          <th>Status</th>
-          <th>QA</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <h3>📄 Submitted Entries</h3>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Entry No.</th>
+            <th>HRID</th>
+            <th>Cataloguer</th>
+            <th>Date In</th>
+            <th>Error fields</th>
+            <th>Error Description</th>
+            <th>Date Out</th>
+            <th>Status</th>
+            <th>QA</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
-</div>
 
 <script>
   fetch("sidebar.html")
@@ -94,43 +72,28 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
-
   let editingId = null;
 
   auth.onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = "index.html";
-    } else {
-      loadEntries();
-    }
+    if (!user) window.location.href = "index.html";
+    else loadEntries();
   });
 
   async function submitEntry() {
     const msg = document.getElementById("msg");
-
-    const hridEl = document.getElementById("hrid");
-    const cataloguerEl = document.getElementById("cataloguer");
-    const dateInEl = document.getElementById("dateIn");
-    const errorFieldsEl = document.getElementById("errorFields");
-    const errorDescriptionEl = document.getElementById("errorDescription");
-    const dateOutEl = document.getElementById("dateOut");
-    const statusEl = document.getElementById("status");
-    const qaEl = document.getElementById("qa");
-
     const data = {
-      hrid: hridEl.value.trim(),
-      cataloguer: cataloguerEl.value.trim(),
-      dateIn: dateInEl.value,
-      errorFields: errorFieldsEl.value.trim(),
-      errorDescription: errorDescriptionEl.value.trim(),
-      dateOut: dateOutEl.value,
-      status: statusEl.value,
-      qa: qaEl.value.trim()
+      hrid: document.getElementById("hrid").value.trim(),
+      cataloguer: document.getElementById("cataloguer").value.trim(),
+      dateIn: document.getElementById("dateIn").value,
+      errorFields: document.getElementById("errorFields").value.trim(),
+      errorDescription: document.getElementById("errorDescription").value.trim(),
+      dateOut: document.getElementById("dateOut").value,
+      status: document.getElementById("status").value,
+      qa: document.getElementById("qa").value.trim()
     };
 
     try {
       if (editingId) {
-        // only update fields, don't change createdAt
         await db.collection("final_checks").doc(editingId).update(data);
         msg.textContent = "✅ Entry updated!";
         editingId = null;
@@ -143,7 +106,6 @@
         });
         msg.textContent = "✅ Entry added!";
       }
-
       clearForm();
       loadEntries();
     } catch (err) {
@@ -158,33 +120,28 @@
   async function loadEntries() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
-
-    try {
-      const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").limit(50).get();
-      let count = 1;
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const row = `
-          <tr>
-            <td>${count++}</td>
-            <td>${d.hrid || ""}</td>
-            <td>${d.cataloguer || ""}</td>
-            <td>${d.dateIn || ""}</td>
-            <td>${d.errorFields || ""}</td>
-            <td>${d.errorDescription || ""}</td>
-            <td>${d.dateOut || ""}</td>
-            <td>${d.status || ""}</td>
-            <td>${d.qa || ""}</td>
-            <td class="actions">
-              <button onclick="editEntry('${doc.id}')">✏️</button>
-              <button onclick="deleteEntry('${doc.id}')">🗑️</button>
-            </td>
-          </tr>`;
-        tbody.innerHTML += row;
-      });
-    } catch (err) {
-      console.error("Error loading entries:", err);
-    }
+    const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").limit(50).get();
+    let count = 1;
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const row = `
+        <tr>
+          <td>${count++}</td>
+          <td>${d.hrid || ""}</td>
+          <td>${d.cataloguer || ""}</td>
+          <td>${d.dateIn || ""}</td>
+          <td>${d.errorFields || ""}</td>
+          <td>${d.errorDescription || ""}</td>
+          <td>${d.dateOut || ""}</td>
+          <td>${d.status || ""}</td>
+          <td>${d.qa || ""}</td>
+          <td class="actions">
+            <button onclick="editEntry('${doc.id}')">✏️</button>
+            <button onclick="deleteEntry('${doc.id}')">🗑️</button>
+          </td>
+        </tr>`;
+      tbody.innerHTML += row;
+    });
   }
 
   async function deleteEntry(id) {
@@ -199,15 +156,13 @@
     if (!doc.exists) return;
 
     const d = doc.data();
-
     document.getElementById("hrid").value = d.hrid || "";
     document.getElementById("cataloguer").value = d.cataloguer || "";
     document.getElementById("dateIn").value = d.dateIn || "";
     document.getElementById("errorFields").value = d.errorFields || "";
     document.getElementById("errorDescription").value = d.errorDescription || "";
     document.getElementById("dateOut").value = d.dateOut || "";
-    const validStatuses = ["Ok", "Rejected"];
-    document.getElementById("status").value = validStatuses.includes(d.status) ? d.status : "Ok";
+    document.getElementById("status").value = d.status || "Ok";
     document.getElementById("qa").value = d.qa || "";
 
     editingId = id;
@@ -226,6 +181,7 @@
 </script>
 </body>
 </html>
+
 
 
 
