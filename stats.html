@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>QA Monthly Breakdown</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/stats.css">
@@ -15,6 +15,7 @@
 <body>
   <div id="container">
     <div id="sidebar"></div>
+
     <div id="main">
       <h2>QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
       <table id="monthlyBreakdown">
@@ -38,12 +39,11 @@
   </div>
 
   <script>
-    // Load sidebar dynamically
-    fetch("sidebar.html")
+    // Load sidebar like initial.html
+    fetch('sidebar.html')
       .then(res => res.text())
-      .then(html => document.getElementById("sidebar").innerHTML = html);
+      .then(html => document.getElementById('sidebar').innerHTML = html);
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
       authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -53,7 +53,6 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Breakdown logic
     const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
     const cataloguers = ['Mutaleb', 'Aziz'];
     const collections = ['initial_checks', 'final_checks'];
@@ -76,13 +75,14 @@
           const data = doc.data();
           const who = data.qa;
           const dateInStr = data.dateIn;
+
           if (!who || !dateInStr || !cataloguers.includes(who)) return;
 
           const date = new Date(dateInStr);
           if (isNaN(date)) return;
 
           const year = date.getFullYear();
-          const month = date.getMonth(); // 0 = Jan, 9 = Oct
+          const month = date.getMonth();
 
           let index = -1;
           if (year === 2025 && month >= 9) index = month - 9;
@@ -90,11 +90,10 @@
           if (index < 0 || index > 5) return;
 
           if (collection === 'initial_checks') counts[who].initial[index]++;
-          else if (collection === 'final_checks') counts[who].final[index]++;
+          else counts[who].final[index]++;
         });
       }
 
-      // Render table rows
       cataloguers.forEach(name => {
         const init = counts[name].initial;
         const fin = counts[name].final;
@@ -111,7 +110,6 @@
         tableBody.innerHTML += row;
       });
 
-      // Totals row
       let totalRow = `<tr><td>Total</td>`;
       const initTotals = Array(6).fill(0);
       const finTotals = Array(6).fill(0);
@@ -134,7 +132,6 @@
       tableBody.innerHTML += totalRow;
     });
   </script>
-
   <script src="js/common.js"></script>
 </body>
 </html>
