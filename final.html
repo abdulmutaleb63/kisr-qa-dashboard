@@ -14,32 +14,34 @@
     <div id="main">
       <h2>Final QA — Submission Form</h2>
 
-      <form id="qaForm">
-        <div class="form-row">
-          <input type="text" id="hrid" placeholder="HRID" />
-          <input type="text" id="cataloguer" placeholder="Cataloguer" />
-        </div>
-        <div class="form-row">
-          <input type="date" id="dateIn" />
-          <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-        </div>
-        <div class="form-row">
-          <textarea id="errorDescription" placeholder="Error Description"></textarea>
-        </div>
-        <div class="form-row">
-          <input type="date" id="dateOut" />
-          <select id="status">
-            <option value="Ok">Ok</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-          <input type="text" id="qa" placeholder="QA" />
-        </div>
-        <div class="form-row">
-          <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
-          <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-        </div>
-        <p id="msg"></p>
-      </form>
+   <form id="qaForm">
+  <div class="form-row">
+    <input type="text" id="hrid" placeholder="HRID" />
+    <input type="text" id="cataloguer" placeholder="Cataloguer" />
+    <input type="date" id="dateIn" />
+  </div>
+
+  <div class="form-row">
+    <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+    <textarea id="errorDescription" placeholder="Error Description"></textarea>
+  </div>
+
+  <div class="form-row">
+    <input type="date" id="dateOut" />
+    <select id="status">
+      <option value="Ok">Ok</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <input type="text" id="qa" placeholder="QA" />
+  </div>
+
+  <div class="form-row">
+    <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
+    <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
+  </div>
+
+  <p id="msg"></p>
+</form>
 
       <h3>📄 Submitted Entries</h3>
       <table id="dataTable">
