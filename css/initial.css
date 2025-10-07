@@ -1,41 +1,38 @@
-/* initial.css */
-/* General Reset and Layout */
-body {
-  font-family: 'Segoe UI', sans-serif;
+/* Shared Reset and Layout */
+* {
   margin: 0;
   padding: 0;
-  background: #fcfcfc;
   box-sizing: border-box;
-  overflow-x: hidden; /* prevents horizontal scroll caused by minor overflows */
 }
 
-/* Container that holds sidebar + content */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #fcfcfc;
+  overflow-x: hidden;
+}
+
 #container {
   display: flex;
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
-  border: 2px solid red;
 }
 
-/* Sidebar */
 #sidebar {
   width: 220px;
   background: #f1f1f1;
   padding: 20px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   flex-shrink: 0;
-  border: 2px solid blue;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
-/* Main content */
 #main {
-  flex-grow: 1;
+  flex: 1;
   padding: 30px;
   margin: 0;
-  max-width: calc(100% - 220px); /* ensure it doesn’t overflow */
   overflow-x: auto;
-  border: 2px solid green;
+  background: #fcfcfc;
+  max-width: calc(100% - 220px);
 }
 
 h2, h3 {
@@ -105,6 +102,7 @@ th, td {
   border: 1px solid #ddd;
   text-align: left;
   font-size: 14px;
+  word-break: break-word;
 }
 
 .actions button {
