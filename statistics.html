@@ -7,16 +7,29 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    .main-container { display: flex; min-height: 100vh; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+    .main-container {
+      display: flex;
+      width: 100%;
+    }
     #sidebar {
       width: 220px;
-      background: #f2f2f2;
+      background-color: #f0f0f0;
       padding: 20px;
+      min-height: 100vh;
       box-sizing: border-box;
     }
-    .content { flex: 1; padding: 30px; }
+    .content {
+      flex-grow: 1;
+      padding: 30px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -24,8 +37,17 @@
     }
     th, td {
       border: 1px solid #ccc;
-      padding: 8px;
+      padding: 8px 10px;
       text-align: center;
+    }
+    th {
+      background-color: #f5f5f5;
+    }
+    label {
+      margin-right: 10px;
+    }
+    button {
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -35,20 +57,12 @@
     <div class="content">
       <h2>KISR QA Statistics (First Occurrence by HRID)</h2>
 
-      <label>Period:
-        <select id="periodSelect">
-          <option value="2025-10-01_2026-03-31">2025 Oct–Mar</option>
-          <option value="2026-04-01_2026-09-30">2026 Apr–Sep</option>
-          <option value="2026-10-01_2027-03-31">2026 Oct–Mar</option>
-          <option value="2027-04-01_2027-09-30">2027 Apr–Sep</option>
-        </select>
-      </label>
+      <label>From: <input type="date" id="fromDate"></label>
+      <label>To: <input type="date" id="toDate"></label>
       <button onclick="generateStats()">Generate Report</button>
       <button onclick="downloadPDF()">Download PDF</button>
 
-      <br><br>
-
-      <table id="statsTable" border="1">
+      <table id="statsTable">
         <thead>
           <tr>
             <th>Period</th>
@@ -63,141 +77,158 @@
     </div>
   </div>
 
-<script>
-  // Load sidebar
-  fetch('sidebar.html')
-    .then(res => res.text())
-    .then(html => document.getElementById('sidebar').innerHTML = html);
+  <script>
+    // Load sidebar
+    fetch('sidebar.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('sidebar').innerHTML = html);
 
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
-    authDomain: "kisr-qa-dashboard.firebaseapp.com",
-    projectId: "kisr-qa-dashboard"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
-
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = "index.html";
-    }
-  });
-
-  async function generateStats() {
-    const periodValue = document.getElementById("periodSelect").value;
-    const [startStr, endStr] = periodValue.split("_");
-    const fromDate = new Date(startStr);
-    const toDate = new Date(endStr);
-    const periodLabel = `${startStr.slice(0, 4)}-${new Date(startStr).toLocaleString('en', { month: 'short' })} to ${endStr.slice(0, 4)}-${new Date(endStr).toLocaleString('en', { month: 'short' })}`;
-
-    const tbody = document.querySelector("#statsTable tbody");
-    tbody.innerHTML = "Loading...";
-
-    const collections = ["initial_checks", "final_checks"];
-    const result = {
-      [periodLabel]: {
-        initialOk: 0, initialRejected: 0,
-        finalOk: 0, finalRejected: 0
-      }
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
     };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    for (let collection of collections) {
-      const seen = new Set();
-      const snap = await db.collection(collection).get();
-
-      snap.forEach(doc => {
-        const d = doc.data();
-        const hrid = d.hrid;
-        const date = new Date(d.createdAt?.seconds * 1000 || d.createdAt);
-
-        if (!hrid || !date || isNaN(date)) return;
-        if (date < fromDate || date > toDate) return;
-
-        const key = `${collection}_${hrid}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-
-        const status = d.status;
-        if (collection === "initial_checks") {
-          if (status === "Ok") result[periodLabel].initialOk++;
-          else if (status === "Rejected") result[periodLabel].initialRejected++;
-        } else {
-          if (status === "Ok") result[periodLabel].finalOk++;
-          else if (status === "Rejected") result[periodLabel].finalRejected++;
-        }
-      });
-    }
-
-    tbody.innerHTML = "";
-    const r = result[periodLabel];
-    tbody.innerHTML += `
-      <tr>
-        <td>${periodLabel}</td>
-        <td>${r.initialOk}</td>
-        <td>${r.initialRejected}</td>
-        <td>${r.finalOk}</td>
-        <td>${r.finalRejected}</td>
-      </tr>`;
-
-    if (
-      r.initialOk === 0 && r.initialRejected === 0 &&
-      r.finalOk === 0 && r.finalRejected === 0
-    ) {
-      tbody.innerHTML = `<tr><td colspan="5">No data in selected period.</td></tr>`;
-    }
-  }
-
-  async function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    const userEmail = firebase.auth().currentUser?.email || "Unknown";
-    const today = new Date().toLocaleDateString("en-GB");
-
-    // Title
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("KISR QA Statistics Report", 14, 20);
-
-    // Metadata
-    doc.setFontSize(11);
-    doc.setFont("Helvetica", "normal");
-    doc.text(`Generated by: ${userEmail}`, 14, 30);
-    doc.text(`Generated on: ${today}`, 14, 36);
-
-    // Disclaimer
-    const disclaimer = `Note: This report includes only the first occurrence of each unique HRID. 
-If a report was initially rejected and later marked OK, only the first status is considered. 
-This ensures accuracy and avoids counting corrections as separate OK entries.`;
-    doc.setFontSize(10);
-    doc.text(doc.splitTextToSize(disclaimer, 180), 14, 46);
-
-    // Table headers
-    let y = 76;
-    doc.setFontSize(11);
-    doc.setFont("Helvetica", "bold");
-    const headers = Array.from(document.querySelectorAll("#statsTable thead th")).map(th => th.innerText);
-    doc.text(headers.join(" | "), 14, y);
-    y += 10;
-
-    // Table rows
-    doc.setFont("Helvetica", "normal");
-    const rows = document.querySelectorAll("#statsTable tbody tr");
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll("td")).map(td => td.innerText);
-      doc.text(cols.join(" | "), 14, y);
-      y += 10;
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+      }
     });
 
-    // Footer (optional NSTIC tag)
-    doc.setFontSize(9);
-    doc.text("KISR — National Scientific and Technical Information Center (NSTIC)", 14, 285);
+    function getSixMonthPeriod(date) {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = d.getMonth();
+      return month >= 9
+        ? `${year}-Oct to ${year + 1}-Mar`
+        : `${year - 1}-Oct to ${year}-Mar`;
+    }
 
-    doc.save("kisr_qa_statistics.pdf");
-  }
-</script>
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    async function generateStats() {
+      const fromDate = formatDate(document.getElementById("fromDate").value);
+      const toDate = formatDate(document.getElementById("toDate").value);
+      const tbody = document.querySelector("#statsTable tbody");
+      tbody.innerHTML = "Loading...";
+
+      const collections = ["initial_checks", "final_checks"];
+      const result = {};
+      const seen = new Set();
+
+      for (let collection of collections) {
+        const snap = await db.collection(collection).get();
+        snap.forEach(doc => {
+          const d = doc.data();
+          const hrid = d.hrid;
+          const date = new Date(d.createdAt?.seconds * 1000 || d.createdAt);
+          if (!hrid || !date || isNaN(date)) return;
+          if (fromDate && date < fromDate) return;
+          if (toDate && date > toDate) return;
+
+          const key = `${collection}_${hrid}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+
+          const period = getSixMonthPeriod(date);
+          if (!result[period]) {
+            result[period] = {
+              initialOk: 0, initialRejected: 0,
+              finalOk: 0, finalRejected: 0
+            };
+          }
+
+          const status = d.status;
+          if (collection === "initial_checks") {
+            if (status === "Ok") result[period].initialOk++;
+            else if (status === "Rejected") result[period].initialRejected++;
+          } else if (collection === "final_checks") {
+            if (status === "Ok") result[period].finalOk++;
+            else if (status === "Rejected") result[period].finalRejected++;
+          }
+        });
+      }
+
+      tbody.innerHTML = "";
+      const sortedPeriods = Object.keys(result).sort();
+      sortedPeriods.forEach(period => {
+        const r = result[period];
+        tbody.innerHTML += `
+          <tr>
+            <td>${period}</td>
+            <td>${r.initialOk}</td>
+            <td>${r.initialRejected}</td>
+            <td>${r.finalOk}</td>
+            <td>${r.finalRejected}</td>
+          </tr>`;
+      });
+
+      if (sortedPeriods.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">No data in selected range.</td></tr>`;
+      }
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const userEmail = firebase.auth().currentUser?.email || "Unknown";
+      const today = new Date().toLocaleDateString("en-GB");
+
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("KISR QA Statistics Report", 14, 20);
+
+      doc.setFontSize(11);
+      doc.setFont("Helvetica", "normal");
+      doc.text(`Generated by: ${userEmail}`, 14, 30);
+      doc.text(`Generated on: ${today}`, 14, 36);
+
+      const note = `Note: This report includes only the first occurrence of each unique HRID.
+If a report was initially rejected and later marked OK, only the first status is considered.
+This ensures accuracy and avoids counting corrections as separate OK entries.`;
+
+      doc.setFontSize(10);
+      doc.text(doc.splitTextToSize(note, 180), 14, 46);
+
+      // Table formatting
+      const table = document.getElementById("statsTable");
+      const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.innerText);
+      const body = Array.from(table.querySelectorAll("tbody tr")).map(row =>
+        Array.from(row.querySelectorAll("td")).map(td => td.innerText)
+      );
+
+      doc.autoTable({
+        startY: 76,
+        head: [headers],
+        body: body,
+        theme: 'grid',
+        styles: {
+          font: "helvetica",
+          fontSize: 10,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [50, 50, 50],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        margin: { left: 14, right: 14 }
+      });
+
+      doc.setFontSize(9);
+      doc.text("KISR — National Scientific and Technical Information Center (NSTIC)", 14, 285);
+      doc.save("kisr_qa_statistics.pdf");
+    }
+  </script>
 </body>
 </html>
+
 
