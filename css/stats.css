@@ -1,9 +1,4 @@
 /* stats.css */
-
-* {
-  box-sizing: border-box;
-}
-
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -25,13 +20,15 @@ body {
 #main {
   flex: 1;
   padding: 30px;
-  min-height: 100vh; /* Ensure it fills vertically to match sidebar */
+  max-width: 1200px;
+  margin: 0 auto; /* same as initial */
 }
 
-h2 {
+h2, h3 {
   margin-top: 0;
 }
 
+/* Table styles (matching initial) */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -43,7 +40,7 @@ table {
 th, td {
   padding: 10px;
   border: 1px solid #ddd;
-  text-align: center;
+  text-align: center; /* center because stats table is numbers */
   font-size: 14px;
 }
 
