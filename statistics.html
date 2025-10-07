@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QA Statistics</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 30px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h2>KISR QA Statistics (First Occurrence by HRID)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Period</th>
+        <th>Initial QA - OK</th>
+        <th>Initial QA - Rejected</th>
+        <th>Final QA - OK</th>
+        <th>Final QA - Rejected</th>
+      </tr>
+    </thead>
+    <tbody id="statsTable"></tbody>
+  </table>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function getPeriod(dateStr) {
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      if (month >= 10 || month <= 3) {
+        return month >= 10 ? `${year}-Oct–${year + 1}-Mar` : `${year - 1}-Oct–${year}-Mar`;
+      } else {
+        return `${year}-Apr–${year}-Sep`;
+      }
+    }
+
+    function processData(docs) {
+      const hridMap = new Map();
+      for (const doc of docs) {
+        const d = doc.data();
+        if (!d.hrid || !d.status || !d.createdAt) continue;
+        const createdAt = d.createdAt.toDate();
+        const hrid = d.hrid.trim();
+        const period = getPeriod(createdAt);
+
+        if (!hridMap.has(hrid)) {
+          hridMap.set(hrid, { period, status: d.status });
+        } else {
+          const existing = hridMap.get(hrid);
+          if (createdAt < new Date(existing.date)) {
+            hridMap.set(hrid, { period, status: d.status });
+          }
+        }
+      }
+
+      const periodStats = {};
+      for (const { period, status } of hridMap.values()) {
+        if (!periodStats[period]) {
+          periodStats[period] = { Ok: 0, Rejected: 0 };
+        }
+        periodStats[period][status] = (periodStats[period][status] || 0) + 1;
+      }
+      return periodStats;
+    }
+
+    async function loadStats() {
+      const [initSnap, finalSnap] = await Promise.all([
+        db.collection("initial_checks").get(),
+        db.collection("final_checks").get()
+      ]);
+
+      const initStats = processData(initSnap.docs);
+      const finalStats = processData(finalSnap.docs);
+
+      const allPeriods = new Set([...Object.keys(initStats), ...Object.keys(finalStats)]);
+      const sortedPeriods = Array.from(allPeriods).sort();
+      const tbody = document.getElementById("statsTable");
+
+      for (const period of sortedPeriods) {
+        const row = document.createElement("tr");
+        const init = initStats[period] || {};
+        const fin = finalStats[period] || {};
+
+        row.innerHTML = `
+          <td>${period}</td>
+          <td>${init.Ok || 0}</td>
+          <td>${init.Rejected || 0}</td>
+          <td>${fin.Ok || 0}</td>
+          <td>${fin.Rejected || 0}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>
