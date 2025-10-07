@@ -2,182 +2,120 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>KISR QA Statistics</title>
+  <title>KISR QA Monthly Summary</title>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; display: flex; }
-    .main-container { display: flex; width: 100%; }
-    #sidebar { width: 220px; background-color: #f0f0f0; padding: 20px; min-height: 100vh; box-sizing: border-box; }
-    .content { flex-grow: 1; padding: 30px; }
+    body { font-family: sans-serif; margin: 0; padding: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: center; }
     th { background-color: #f5f5f5; }
-    select, button { margin-right: 10px; }
+    h2 { margin-bottom: 10px; }
   </style>
 </head>
 <body>
-<div class="main-container">
-  <div id="sidebar"></div>
-  <div class="content">
-    <h2>KISR QA Statistics (First Occurrence by HRID)</h2>
+  <h2>KISR QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
 
-    <label>Select Period:
-      <select id="periodSelect"></select>
-    </label>
-    <button onclick="generateStats()">Generate</button>
-    <button onclick="downloadPDF()">Download PDF</button>
+  <table id="qaTable">
+    <thead>
+      <tr>
+        <th rowspan="2">Done By</th>
+        <th colspan="6">Initial Checks</th>
+        <th rowspan="2">Total</th>
+        <th colspan="6">Final Checks</th>
+        <th rowspan="2">Total</th>
+        <th rowspan="2">Grand Total</th>
+      </tr>
+      <tr>
+        <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
+        <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
+      </tr>
+    </thead>
+    <tbody id="qaBody"></tbody>
+  </table>
 
-    <table id="statsTable">
-      <thead>
-        <tr>
-          <th>Period</th>
-          <th>Initial QA - OK</th>
-          <th>Initial QA - Rejected</th>
-          <th>Final QA - OK</th>
-          <th>Final QA - Rejected</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-<script>
-  fetch('sidebar.html').then(res => res.text()).then(html => {
-    document.getElementById('sidebar').innerHTML = html;
-  });
+    const people = ["Mutaleb", "Aziz"];
+    const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+    const monthIndex = { Oct: 9, Nov: 10, Dec: 11, Jan: 0, Feb: 1, Mar: 2 };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
-    authDomain: "kisr-qa-dashboard.firebaseapp.com",
-    projectId: "kisr-qa-dashboard"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
+    const start = new Date("2025-10-01");
+    const end = new Date("2026-03-31");
 
-  let statsByPeriod = {};
+    const counts = {};
+    people.forEach(p => {
+      counts[p] = {
+        initial: [0, 0, 0, 0, 0, 0],
+        final: [0, 0, 0, 0, 0, 0],
+      };
+    });
 
-  auth.onAuthStateChanged(user => {
-    if (!user) window.location.href = "index.html";
-    else preloadStats();
-  });
+    Promise.all([
+      db.collection("initial_checks").get(),
+      db.collection("final_checks").get()
+    ]).then(([initSnap, finalSnap]) => {
+      initSnap.forEach(doc => processDoc(doc.data(), "initial"));
+      finalSnap.forEach(doc => processDoc(doc.data(), "final"));
+      renderTable();
+    });
 
-  function getSixMonthPeriod(date) {
-    const d = new Date(date);
-    const y = d.getFullYear();
-    const m = d.getMonth();
-    return m >= 3 && m <= 8 ? `${y}-Apr to ${y}-Sep` : `${m >= 9 ? y : y - 1}-Oct to ${m >= 9 ? y + 1 : y}-Mar`;
-  }
+    function processDoc(data, type) {
+      const name = data.doneBy;
+      const rawDate = data.dateIn || data.createdAt;
+      if (!name || !people.includes(name) || !rawDate) return;
+      const date = new Date(rawDate.seconds ? rawDate.seconds * 1000 : rawDate);
+      if (isNaN(date) || date < start || date > end) return;
+      const m = date.getMonth();
+      let index = -1;
+      if (m >= 9) index = m - 9;       // Oct (9) to Dec (11) => index 0–2
+      else index = m + 3;              // Jan (0) to Mar (2) => index 3–5
+      if (index >= 0 && index <= 5) counts[name][type][index]++;
+    }
 
-  async function preloadStats() {
-    const collections = ["initial_checks", "final_checks"];
-    const seen = new Set();
-    for (let collection of collections) {
-      const snap = await db.collection(collection).get();
-      snap.forEach(doc => {
-        const d = doc.data();
-        const hrid = d.hrid;
-        const date = new Date(d.createdAt?.seconds * 1000 || d.createdAt);
-        if (!hrid || !date || isNaN(date)) return;
+    function renderTable() {
+      const tbody = document.getElementById("qaBody");
+      tbody.innerHTML = "";
+      let grandTotal = 0;
 
-        const key = `${collection}_${hrid}`;
-        if (seen.has(key)) return;
-        seen.add(key);
+      people.forEach(p => {
+        const init = counts[p].initial;
+        const fin = counts[p].final;
+        const initTotal = init.reduce((a,b) => a + b, 0);
+        const finTotal = fin.reduce((a,b) => a + b, 0);
+        const total = initTotal + finTotal;
+        grandTotal += total;
 
-        const period = getSixMonthPeriod(date);
-        if (!statsByPeriod[period]) statsByPeriod[period] = {
-          initialOk: 0, initialRejected: 0, finalOk: 0, finalRejected: 0
-        };
-
-        if (collection === "initial_checks") {
-          if (d.status === "Ok") statsByPeriod[period].initialOk++;
-          else if (d.status === "Rejected") statsByPeriod[period].initialRejected++;
-        } else {
-          if (d.status === "Ok") statsByPeriod[period].finalOk++;
-          else if (d.status === "Rejected") statsByPeriod[period].finalRejected++;
-        }
+        let row = `<tr><td>${p}</td>`;
+        init.forEach(v => row += `<td>${v}</td>`);
+        row += `<td>${initTotal}</td>`;
+        fin.forEach(v => row += `<td>${v}</td>`);
+        row += `<td>${finTotal}</td><td>${total}</td></tr>`;
+        tbody.innerHTML += row;
       });
+
+      // Total row
+      let totalRow = '<tr><th>Total</th>';
+      for (let i = 0; i < 6; i++) {
+        totalRow += `<th>${people.reduce((sum, p) => sum + counts[p].initial[i], 0)}</th>`;
+      }
+      const allInit = people.reduce((sum, p) => sum + counts[p].initial.reduce((a,b) => a + b, 0), 0);
+      totalRow += `<th>${allInit}</th>`;
+      for (let i = 0; i < 6; i++) {
+        totalRow += `<th>${people.reduce((sum, p) => sum + counts[p].final[i], 0)}</th>`;
+      }
+      const allFinal = people.reduce((sum, p) => sum + counts[p].final.reduce((a,b) => a + b, 0), 0);
+      totalRow += `<th>${allFinal}</th><th>${grandTotal}</th></tr>`;
+      tbody.innerHTML += totalRow;
     }
-    populateDropdown();
-  }
-
-  function populateDropdown() {
-    const select = document.getElementById("periodSelect");
-    select.innerHTML = "";
-    const periods = Object.keys(statsByPeriod).sort();
-    periods.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p;
-      opt.textContent = p;
-      select.appendChild(opt);
-    });
-  }
-
-  function generateStats() {
-    const selectedPeriod = document.getElementById("periodSelect").value;
-    const tbody = document.querySelector("#statsTable tbody");
-    tbody.innerHTML = "";
-    const r = statsByPeriod[selectedPeriod];
-    if (r) {
-      tbody.innerHTML = `
-        <tr>
-          <td>${selectedPeriod}</td>
-          <td>${r.initialOk}</td>
-          <td>${r.initialRejected}</td>
-          <td>${r.finalOk}</td>
-          <td>${r.finalRejected}</td>
-        </tr>`;
-    } else {
-      tbody.innerHTML = `<tr><td colspan="5">No data available.</td></tr>`;
-    }
-  }
-
-  async function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const userEmail = firebase.auth().currentUser?.email || "Unknown";
-    const today = new Date().toLocaleDateString("en-GB");
-    const selectedPeriod = document.getElementById("periodSelect").value;
-    const r = statsByPeriod[selectedPeriod];
-
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("KISR QA Statistics Report", 14, 20);
-
-    doc.setFontSize(11);
-    doc.setFont("Helvetica", "normal");
-    doc.text(`Generated by: ${userEmail}`, 14, 30);
-    doc.text(`Generated on: ${today}`, 14, 36);
-
-    const note = `Note: This report includes only the first occurrence of each unique HRID.\nIf a report was initially rejected and later marked OK, only the first status is considered.\nThis ensures accuracy and avoids counting corrections as separate OK entries.`;
-    doc.setFontSize(10);
-    doc.text(doc.splitTextToSize(note, 180), 14, 46);
-
-    doc.autoTable({
-      startY: 76,
-      head: [["Period", "Initial QA - OK", "Initial QA - Rejected", "Final QA - OK", "Final QA - Rejected"]],
-      body: [[
-        selectedPeriod,
-        r?.initialOk || 0,
-        r?.initialRejected || 0,
-        r?.finalOk || 0,
-        r?.finalRejected || 0
-      ]],
-      theme: 'grid',
-      styles: { font: "helvetica", fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [50, 50, 50], textColor: 255, fontStyle: 'bold' },
-      margin: { left: 14, right: 14 }
-    });
-
-    doc.setFontSize(9);
-    doc.text("KISR — National Scientific and Technical Information Center (NSTIC)", 14, 285);
-    doc.save("kisr_qa_statistics.pdf");
-  }
-</script>
+  </script>
 </body>
 </html>
