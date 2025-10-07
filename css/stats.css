@@ -1,0 +1,48 @@
+/* stats.css */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #fcfcfc;
+}
+
+#container {
+  display: flex;
+  min-height: 100vh;
+}
+
+#sidebar {
+  width: 220px;
+  background: #f1f1f1;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+#main {
+  flex: 1;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+  border: 1px solid #ddd;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background-color: #f5f5f5;
+}
