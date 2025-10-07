@@ -32,6 +32,11 @@
       padding: 30px;
     }
     .actions button { margin-right: 5px; }
+    #cancelBtn {
+      display: none;
+      background: #999;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +57,7 @@
     </select>
     <input type="text" id="qa" placeholder="QA" />
     <button id="submitBtn" onclick="submitEntry()">Submit</button>
+    <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
     <p id="msg"></p>
 
     <h3>📄 Submitted Entries</h3>
@@ -76,12 +82,10 @@
 </div>
 
 <script>
-  // Load sidebar
   fetch("sidebar.html")
     .then(res => res.text())
     .then(html => document.getElementById("sidebar").innerHTML = html);
 
-  // Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
     authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -101,53 +105,51 @@
     }
   });
 
-  function logout() {
-    auth.signOut().then(() => window.location.href = "index.html");
-  }
+  async function submitEntry() {
+    const msg = document.getElementById("msg");
 
-async function submitEntry() {
-  const msg = document.getElementById("msg");
+    const hridEl = document.getElementById("hrid");
+    const cataloguerEl = document.getElementById("cataloguer");
+    const dateInEl = document.getElementById("dateIn");
+    const errorFieldsEl = document.getElementById("errorFields");
+    const errorDescriptionEl = document.getElementById("errorDescription");
+    const dateOutEl = document.getElementById("dateOut");
+    const statusEl = document.getElementById("status");
+    const qaEl = document.getElementById("qa");
 
-  // ✅ Explicitly define form elements
-  const hrid = document.getElementById("hrid");
-  const cataloguer = document.getElementById("cataloguer");
-  const dateIn = document.getElementById("dateIn");
-  const errorFields = document.getElementById("errorFields");
-  const errorDescription = document.getElementById("errorDescription");
-  const dateOut = document.getElementById("dateOut");
-  const status = document.getElementById("status"); // ✅ FIX
-  const qa = document.getElementById("qa");
+    const data = {
+      hrid: hridEl.value.trim(),
+      cataloguer: cataloguerEl.value.trim(),
+      dateIn: dateInEl.value,
+      errorFields: errorFieldsEl.value.trim(),
+      errorDescription: errorDescriptionEl.value.trim(),
+      dateOut: dateOutEl.value,
+      status: statusEl.value,
+      qa: qaEl.value.trim()
+    };
 
-  const data = {
-    hrid: hrid.value.trim(),
-    cataloguer: cataloguer.value.trim(),
-    dateIn: dateIn.value,
-    errorFields: errorFields.value.trim(),
-    errorDescription: errorDescription.value.trim(),
-    dateOut: dateOut.value,
-    status: status.value,  // ✅ This was undefined before
-    qa: qa.value.trim(),
-    createdAt: new Date()
-  };
+    try {
+      if (editingId) {
+        // only update fields, don't change createdAt
+        await db.collection("final_checks").doc(editingId).update(data);
+        msg.textContent = "✅ Entry updated!";
+        editingId = null;
+        document.getElementById("submitBtn").textContent = "Submit";
+        document.getElementById("cancelBtn").style.display = "none";
+      } else {
+        await db.collection("final_checks").add({
+          ...data,
+          createdAt: new Date()
+        });
+        msg.textContent = "✅ Entry added!";
+      }
 
-  try {
-    if (editingId) {
-      await db.collection("final_checks").doc(editingId).update(data);
-      msg.textContent = "✅ Entry updated!";
-      editingId = null;
-      document.getElementById("submitBtn").textContent = "Submit";
-    } else {
-      await db.collection("final_checks").add(data);
-      msg.textContent = "✅ Entry added!";
+      clearForm();
+      loadEntries();
+    } catch (err) {
+      msg.textContent = "❌ Error: " + err.message;
     }
-
-    clearForm();
-    loadEntries();
-  } catch (err) {
-    msg.textContent = "❌ Error: " + err.message;
   }
-}
-
 
   function clearForm() {
     document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
@@ -197,24 +199,34 @@ async function submitEntry() {
     if (!doc.exists) return;
 
     const d = doc.data();
-    hrid.value = d.hrid || "";
-    cataloguer.value = d.cataloguer || "";
-    dateIn.value = d.dateIn || "";
-    errorFields.value = d.errorFields || "";
-    errorDescription.value = d.errorDescription || "";
-    dateOut.value = d.dateOut || "";
+
+    document.getElementById("hrid").value = d.hrid || "";
+    document.getElementById("cataloguer").value = d.cataloguer || "";
+    document.getElementById("dateIn").value = d.dateIn || "";
+    document.getElementById("errorFields").value = d.errorFields || "";
+    document.getElementById("errorDescription").value = d.errorDescription || "";
+    document.getElementById("dateOut").value = d.dateOut || "";
     const validStatuses = ["Ok", "Rejected"];
-    status.value = validStatuses.includes(d.status) ? d.status : "Ok";
-    qa.value = d.qa || "";
+    document.getElementById("status").value = validStatuses.includes(d.status) ? d.status : "Ok";
+    document.getElementById("qa").value = d.qa || "";
 
     editingId = id;
     document.getElementById("submitBtn").textContent = "Update";
+    document.getElementById("cancelBtn").style.display = "inline-block";
     document.getElementById("msg").textContent = "Editing entry...";
   }
-</script>
 
+  function cancelEdit() {
+    editingId = null;
+    clearForm();
+    document.getElementById("submitBtn").textContent = "Submit";
+    document.getElementById("cancelBtn").style.display = "none";
+    document.getElementById("msg").textContent = "Edit cancelled.";
+  }
+</script>
 </body>
 </html>
+
 
 
 
