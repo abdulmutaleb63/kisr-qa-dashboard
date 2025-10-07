@@ -1,14 +1,14 @@
-.sidebar ul {
+#sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.sidebar li {
+#sidebar li {
   margin-bottom: 12px; /* Adds space between links */
 }
 
-.sidebar a {
+#sidebar a {
   display: flex;
   align-items: center;
   padding: 10px 14px;
@@ -19,31 +19,30 @@
   height: 40px;
 }
 
-.sidebar a i {
+#sidebar a i {
   margin-right: 10px;
   font-size: 16px;
   transition: color 0.2s ease;
 }
 
 /* Hover Effect */
-.sidebar a:hover {
+#sidebar a:hover {
   background-color: #eef3ff;
   color: #004aad;
 }
 
-/* Hover icon change too */
-.sidebar a:hover i {
+#sidebar a:hover i {
   color: #004aad;
 }
 
 /* Active state */
-.sidebar a.active {
+#sidebar a.active {
   background-color: #e0ebff;
   color: #004aad;
   font-weight: 500;
 }
 
-.sidebar a.active i {
+#sidebar a.active i {
   color: #004aad;
 }
 
