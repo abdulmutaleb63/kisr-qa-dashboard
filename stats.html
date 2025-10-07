@@ -6,34 +6,15 @@
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/stats.css">
-  <link rel="stylesheet" href="css/sidebar-style.css">
 </head>
 <body>
   <div id="container">
-    
-    <!-- Embedded Sidebar -->
-    <div class="sidebar" id="sidebar">
-      <h3 class="dashboard-label">KISR QA<br>Dashboard</h3>
-      <nav>
-        <ul>
-          <li><a href="initial.html"><i class="fas fa-clipboard-check"></i> <span class="label">Initial Check</span></a></li>
-          <li><a href="final.html"><i class="fas fa-clipboard-list"></i> <span class="label">Final Check</span></a></li>
-          <li><a href="stats.html"><i class="fas fa-chart-bar"></i> <span class="label">Statistics</span></a></li>
-          <li><a href="report.html"><i class="fas fa-file-alt"></i> <span class="label">Report</span></a></li>
-          <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="label">Logout</span></a></li>
-        </ul>
-      </nav>
-    </div>
-
-    <!-- Main Content -->
+    <div id="sidebar"></div>
     <div id="main">
       <h2>QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
       <table id="monthlyBreakdown">
@@ -57,6 +38,12 @@
   </div>
 
   <script>
+    // Load sidebar dynamically
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("sidebar").innerHTML = html);
+
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
       authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -66,6 +53,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // Breakdown logic
     const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
     const cataloguers = ['Mutaleb', 'Aziz'];
     const collections = ['initial_checks', 'final_checks'];
@@ -88,7 +76,6 @@
           const data = doc.data();
           const who = data.qa;
           const dateInStr = data.dateIn;
-
           if (!who || !dateInStr || !cataloguers.includes(who)) return;
 
           const date = new Date(dateInStr);
@@ -107,7 +94,7 @@
         });
       }
 
-      // Render data
+      // Render table rows
       cataloguers.forEach(name => {
         const init = counts[name].initial;
         const fin = counts[name].final;
@@ -124,7 +111,7 @@
         tableBody.innerHTML += row;
       });
 
-      // Totals
+      // Totals row
       let totalRow = `<tr><td>Total</td>`;
       const initTotals = Array(6).fill(0);
       const finTotals = Array(6).fill(0);
@@ -146,13 +133,8 @@
 
       tableBody.innerHTML += totalRow;
     });
-
-    function logout() {
-      firebase.auth().signOut().then(() => {
-        window.location.href = "index.html";
-      });
-    }
   </script>
+
   <script src="js/common.js"></script>
 </body>
 </html>
