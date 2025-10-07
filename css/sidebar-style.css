@@ -1,3 +1,29 @@
+/* Reset margins/padding to prevent layout shift */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #fcfcfc;
+}
+
+/* Sidebar container */
+#sidebar {
+  width: 220px;
+  background: #f1f1f1;
+  padding: 20px;
+  border-right: 1px solid #ddd;  /* Clean divider */
+  box-shadow: none;              /* Remove bulge */
+  border-radius: 0;              /* Flat look */
+}
+
+/* Label at the top */
+#sidebar .dashboard-label {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+/* Sidebar nav links */
 #sidebar ul {
   list-style: none;
   padding: 0;
@@ -5,7 +31,7 @@
 }
 
 #sidebar li {
-  margin-bottom: 12px; /* Adds space between links */
+  margin-bottom: 12px; /* Space between links */
 }
 
 #sidebar a {
@@ -25,7 +51,7 @@
   transition: color 0.2s ease;
 }
 
-/* Hover Effect */
+/* Hover effect */
 #sidebar a:hover {
   background-color: #eef3ff;
   color: #004aad;
@@ -35,7 +61,7 @@
   color: #004aad;
 }
 
-/* Active state */
+/* Active link styling */
 #sidebar a.active {
   background-color: #e0ebff;
   color: #004aad;
@@ -45,4 +71,3 @@
 #sidebar a.active i {
   color: #004aad;
 }
-
