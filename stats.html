@@ -9,13 +9,31 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
 
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <!-- Styles -->
   <link rel="stylesheet" href="css/stats.css">
+  <link rel="stylesheet" href="css/sidebar-style.css">
 </head>
 <body>
   <div id="container">
-    <div id="sidebar"></div>
+    
+    <!-- Embedded Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <h3 class="dashboard-label">KISR QA<br>Dashboard</h3>
+      <nav>
+        <ul>
+          <li><a href="initial.html"><i class="fas fa-clipboard-check"></i> <span class="label">Initial Check</span></a></li>
+          <li><a href="final.html"><i class="fas fa-clipboard-list"></i> <span class="label">Final Check</span></a></li>
+          <li><a href="stats.html"><i class="fas fa-chart-bar"></i> <span class="label">Statistics</span></a></li>
+          <li><a href="report.html"><i class="fas fa-file-alt"></i> <span class="label">Report</span></a></li>
+          <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="label">Logout</span></a></li>
+        </ul>
+      </nav>
+    </div>
 
+    <!-- Main Content -->
     <div id="main">
       <h2>QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
       <table id="monthlyBreakdown">
@@ -39,11 +57,6 @@
   </div>
 
   <script>
-    // Load sidebar
-    fetch("sidebar.html")
-      .then(res => res.text())
-      .then(html => document.getElementById("sidebar").innerHTML = html);
-
     const firebaseConfig = {
       apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
       authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -133,7 +146,13 @@
 
       tableBody.innerHTML += totalRow;
     });
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
   </script>
-   <script src="js/common.js"></script>
+  <script src="js/common.js"></script>
 </body>
 </html>
