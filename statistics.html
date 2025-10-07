@@ -7,6 +7,41 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+    .main-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    #sidebar {
+      width: 220px;
+      border-right: 1px solid #ccc;
+      padding: 20px;
+      background-color: #f7f7f7;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+      text-align: left;
+    }
+    input, button {
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
   <div class="main-container">
@@ -19,9 +54,7 @@
       <button onclick="generateStats()">Generate Report</button>
       <button onclick="downloadPDF()">Download PDF</button>
 
-      <br><br>
-
-      <table id="statsTable" border="1">
+      <table id="statsTable">
         <thead>
           <tr>
             <th>Period</th>
@@ -164,4 +197,6 @@
 </script>
 </body>
 </html>
+
+
 
