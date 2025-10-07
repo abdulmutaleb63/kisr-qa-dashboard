@@ -2,22 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>KISR QA Monthly Summary</title>
+  <title>KISR QA Monthly Breakdown</title>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: center; }
-    th { background-color: #f5f5f5; }
-    h2 { margin-bottom: 10px; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f5f5f5;
+    }
   </style>
 </head>
 <body>
   <h2>KISR QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
-
-  <table id="qaTable">
+  <table id="monthlyBreakdown">
     <thead>
       <tr>
         <th rowspan="2">Done By</th>
@@ -32,7 +44,9 @@
         <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
       </tr>
     </thead>
-    <tbody id="qaBody"></tbody>
+    <tbody>
+      <!-- Data rows will be inserted here -->
+    </tbody>
   </table>
 
   <script>
@@ -43,79 +57,86 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    const people = ["Mutaleb", "Aziz"];
-    const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-    const monthIndex = { Oct: 9, Nov: 10, Dec: 11, Jan: 0, Feb: 1, Mar: 2 };
+    const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    const monthIndexes = [9,10,11,0,1,2]; // JS month indexes
 
-    const start = new Date("2025-10-01");
-    const end = new Date("2026-03-31");
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) return window.location.href = "index.html";
+      const tableBody = document.querySelector("#monthlyBreakdown tbody");
+      const cataloguers = ['Mutaleb', 'Aziz'];
+      const collections = ['initial_checks', 'final_checks'];
 
-    const counts = {};
-    people.forEach(p => {
-      counts[p] = {
-        initial: [0, 0, 0, 0, 0, 0],
-        final: [0, 0, 0, 0, 0, 0],
-      };
-    });
-
-    Promise.all([
-      db.collection("initial_checks").get(),
-      db.collection("final_checks").get()
-    ]).then(([initSnap, finalSnap]) => {
-      initSnap.forEach(doc => processDoc(doc.data(), "initial"));
-      finalSnap.forEach(doc => processDoc(doc.data(), "final"));
-      renderTable();
-    });
-
-    function processDoc(data, type) {
-      const name = data.doneBy;
-      const rawDate = data.dateIn || data.createdAt;
-      if (!name || !people.includes(name) || !rawDate) return;
-      const date = new Date(rawDate.seconds ? rawDate.seconds * 1000 : rawDate);
-      if (isNaN(date) || date < start || date > end) return;
-      const m = date.getMonth();
-      let index = -1;
-      if (m >= 9) index = m - 9;       // Oct (9) to Dec (11) => index 0–2
-      else index = m + 3;              // Jan (0) to Mar (2) => index 3–5
-      if (index >= 0 && index <= 5) counts[name][type][index]++;
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById("qaBody");
-      tbody.innerHTML = "";
-      let grandTotal = 0;
-
-      people.forEach(p => {
-        const init = counts[p].initial;
-        const fin = counts[p].final;
-        const initTotal = init.reduce((a,b) => a + b, 0);
-        const finTotal = fin.reduce((a,b) => a + b, 0);
-        const total = initTotal + finTotal;
-        grandTotal += total;
-
-        let row = `<tr><td>${p}</td>`;
-        init.forEach(v => row += `<td>${v}</td>`);
-        row += `<td>${initTotal}</td>`;
-        fin.forEach(v => row += `<td>${v}</td>`);
-        row += `<td>${finTotal}</td><td>${total}</td></tr>`;
-        tbody.innerHTML += row;
+      const counts = {};
+      cataloguers.forEach(name => {
+        counts[name] = {
+          initial: Array(6).fill(0),
+          final: Array(6).fill(0)
+        };
       });
 
-      // Total row
-      let totalRow = '<tr><th>Total</th>';
-      for (let i = 0; i < 6; i++) {
-        totalRow += `<th>${people.reduce((sum, p) => sum + counts[p].initial[i], 0)}</th>`;
+      const start = new Date('2025-10-01');
+      const end = new Date('2026-03-31');
+
+      for (const collection of collections) {
+        const snap = await db.collection(collection).get();
+        snap.forEach(doc => {
+          const d = doc.data();
+          const who = d.doneBy;
+          const date = new Date(d.createdAt?.seconds * 1000 || d.createdAt);
+          if (!who || !cataloguers.includes(who) || isNaN(date)) return;
+          if (date < start || date > end) return;
+
+          const year = date.getFullYear();
+          const month = date.getMonth();
+
+          let index = -1;
+          if (year === 2025 && month >= 9) index = month - 9;  // Oct–Dec 2025
+          if (year === 2026 && month <= 2) index = month + 3;  // Jan–Mar 2026
+          if (index === -1) return;
+
+          if (collection === 'initial_checks') counts[who].initial[index]++;
+          if (collection === 'final_checks') counts[who].final[index]++;
+        });
       }
-      const allInit = people.reduce((sum, p) => sum + counts[p].initial.reduce((a,b) => a + b, 0), 0);
-      totalRow += `<th>${allInit}</th>`;
+
+      cataloguers.forEach(name => {
+        const init = counts[name].initial;
+        const fin = counts[name].final;
+        const totalInit = init.reduce((a,b) => a+b, 0);
+        const totalFin = fin.reduce((a,b) => a+b, 0);
+        const grand = totalInit + totalFin;
+
+        let row = `<tr><td>${name}</td>`;
+        row += init.map(n => `<td>${n}</td>`).join('');
+        row += `<td>${totalInit}</td>`;
+        row += fin.map(n => `<td>${n}</td>`).join('');
+        row += `<td>${totalFin}</td>`;
+        row += `<td>${grand}</td></tr>`;
+        tableBody.innerHTML += row;
+      });
+
+      // Totals row
+      const totalRow = [`<td>Total</td>`];
       for (let i = 0; i < 6; i++) {
-        totalRow += `<th>${people.reduce((sum, p) => sum + counts[p].final[i], 0)}</th>`;
+        const sumInit = cataloguers.reduce((sum, name) => sum + counts[name].initial[i], 0);
+        totalRow.push(`<td>${sumInit}</td>`);
       }
-      const allFinal = people.reduce((sum, p) => sum + counts[p].final.reduce((a,b) => a + b, 0), 0);
-      totalRow += `<th>${allFinal}</th><th>${grandTotal}</th></tr>`;
-      tbody.innerHTML += totalRow;
-    }
+      const totalInitAll = totalRow.slice(1).reduce((a,b) => a + parseInt(b.replace(/<[^>]+>/g, '')), 0);
+      totalRow.push(`<td>${totalInitAll}</td>`);
+
+      for (let i = 0; i < 6; i++) {
+        const sumFin = cataloguers.reduce((sum, name) => sum + counts[name].final[i], 0);
+        totalRow.push(`<td>${sumFin}</td>`);
+      }
+      const totalFinAll = totalRow.slice(8,14).reduce((a,b) => a + parseInt(b.replace(/<[^>]+>/g, '')), 0);
+      totalRow.push(`<td>${totalFinAll}</td>`);
+      totalRow.push(`<td>${totalInitAll + totalFinAll}</td>`);
+
+      tableBody.innerHTML += `<tr>${totalRow.join('')}</tr>`;
+    });
   </script>
 </body>
 </html>
+
