@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Initial Check</title>
+  <title>Initial QA Check</title>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
@@ -16,27 +16,31 @@
     table { border-collapse: collapse; width: 100%; margin-top: 30px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     .actions button { margin-right: 5px; }
+    #cancelBtn {
+      display: none;
+      background: #999;
+      color: white;
+    }
   </style>
 </head>
 <body>
   <div id="sidebar"></div>
   <div id="main">
     <h2>Initial QA — Submission Form</h2>
-    <form id="entryForm">
-      <input type="text" id="hrid" placeholder="HRID" required />
-      <input type="text" id="cataloguer" placeholder="Cataloguer" required />
-      <input type="date" id="dateIn" placeholder="Date in" required />
-      <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-      <textarea id="errorDescription" placeholder="Error Description"></textarea>
-      <input type="date" id="dateOut" placeholder="Date Out" />
-      <select id="status">
-        <option value="Ok">Ok</option>
-        <option value="Rejected">Rejected</option>
-      </select>
-      <input type="text" id="qa" placeholder="QA" required />
-      <button type="submit">Submit</button>
-      <p id="msg"></p>
-    </form>
+    <input type="text" id="hrid" placeholder="HRID" required />
+    <input type="text" id="cataloguer" placeholder="Cataloguer" required />
+    <input type="date" id="dateIn" placeholder="Date in" required />
+    <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+    <textarea id="errorDescription" placeholder="Error Description"></textarea>
+    <input type="date" id="dateOut" placeholder="Date Out" />
+    <select id="status">
+      <option value="Ok">Ok</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <input type="text" id="qa" placeholder="QA" required />
+    <button id="submitBtn" onclick="submitEntry()">Submit</button>
+    <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
+    <p id="msg"></p>
 
     <h3>📋 Submitted Entries</h3>
     <table id="dataTable">
@@ -74,48 +78,60 @@
   const db = firebase.firestore();
   const auth = firebase.auth();
 
+  let editingId = null;
+
   auth.onAuthStateChanged(user => {
     if (!user) window.location.href = 'index.html';
     else loadEntries();
   });
 
-  // Submit form
-  document.getElementById('entryForm').addEventListener('submit', async e => {
-    e.preventDefault();
+  async function submitEntry() {
     const msg = document.getElementById('msg');
-    msg.textContent = "Submitting...";
 
-    // ✅ define all elements first
-    const hrid = document.getElementById("hrid");
-    const cataloguer = document.getElementById("cataloguer");
-    const dateIn = document.getElementById("dateIn");
-    const errorFields = document.getElementById("errorFields");
-    const errorDescription = document.getElementById("errorDescription");
-    const dateOut = document.getElementById("dateOut");
-    const status = document.getElementById("status");
-    const qa = document.getElementById("qa");
+    const hridEl = document.getElementById("hrid");
+    const cataloguerEl = document.getElementById("cataloguer");
+    const dateInEl = document.getElementById("dateIn");
+    const errorFieldsEl = document.getElementById("errorFields");
+    const errorDescriptionEl = document.getElementById("errorDescription");
+    const dateOutEl = document.getElementById("dateOut");
+    const statusEl = document.getElementById("status");
+    const qaEl = document.getElementById("qa");
 
     const data = {
-      hrid: hrid.value.trim(),
-      cataloguer: cataloguer.value.trim(),
-      dateIn: dateIn.value,
-      errorFields: errorFields.value,
-      errorDescription: errorDescription.value.trim(),
-      dateOut: dateOut.value,
-      status: status.value,
-      qa: qa.value.trim(),
-      createdAt: new Date()
+      hrid: hridEl.value.trim(),
+      cataloguer: cataloguerEl.value.trim(),
+      dateIn: dateInEl.value,
+      errorFields: errorFieldsEl.value.trim(),
+      errorDescription: errorDescriptionEl.value.trim(),
+      dateOut: dateOutEl.value,
+      status: statusEl.value,
+      qa: qaEl.value.trim()
     };
 
     try {
-      await db.collection("initial_checks").add(data);
-      msg.textContent = "✅ Entry added!";
-      document.getElementById("entryForm").reset();
+      if (editingId) {
+        await db.collection("initial_checks").doc(editingId).update(data);
+        msg.textContent = "✅ Entry updated!";
+        editingId = null;
+        document.getElementById("submitBtn").textContent = "Submit";
+        document.getElementById("cancelBtn").style.display = "none";
+      } else {
+        await db.collection("initial_checks").add({
+          ...data,
+          createdAt: new Date()
+        });
+        msg.textContent = "✅ Entry added!";
+      }
+      clearForm();
       loadEntries();
     } catch (err) {
       msg.textContent = "❌ Error: " + err.message;
     }
-  });
+  }
+
+  function clearForm() {
+    document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
+  }
 
   async function loadEntries() {
     const tbody = document.querySelector('#dataTable tbody');
@@ -151,8 +167,33 @@
     }
   }
 
-  function editEntry(id) {
-    alert("✏️ Edit feature coming next");
+  async function editEntry(id) {
+    const doc = await db.collection("initial_checks").doc(id).get();
+    if (!doc.exists) return;
+
+    const d = doc.data();
+    document.getElementById("hrid").value = d.hrid || "";
+    document.getElementById("cataloguer").value = d.cataloguer || "";
+    document.getElementById("dateIn").value = d.dateIn || "";
+    document.getElementById("errorFields").value = d.errorFields || "";
+    document.getElementById("errorDescription").value = d.errorDescription || "";
+    document.getElementById("dateOut").value = d.dateOut || "";
+    const validStatuses = ["Ok", "Rejected"];
+    document.getElementById("status").value = validStatuses.includes(d.status) ? d.status : "Ok";
+    document.getElementById("qa").value = d.qa || "";
+
+    editingId = id;
+    document.getElementById("submitBtn").textContent = "Update";
+    document.getElementById("cancelBtn").style.display = "inline-block";
+    document.getElementById("msg").textContent = "Editing entry...";
+  }
+
+  function cancelEdit() {
+    editingId = null;
+    clearForm();
+    document.getElementById("submitBtn").textContent = "Submit";
+    document.getElementById("cancelBtn").style.display = "none";
+    document.getElementById("msg").textContent = "Edit cancelled.";
   }
 </script>
 </body>
