@@ -33,6 +33,7 @@ body {
   margin: 0;
   max-width: calc(100% - 220px); /* ensure it doesn’t overflow */
   overflow-x: auto;
+  border: 2px solid green;
 }
 
 h2, h3 {
