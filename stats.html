@@ -3,53 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <title>KISR QA Monthly Breakdown</title>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f5f5f5;
-    }
-  </style>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/stats.css">
 </head>
 <body>
-  <h2>KISR QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
-  <table id="monthlyBreakdown">
-    <thead>
-      <tr>
-        <th rowspan="2">Done By</th>
-        <th colspan="6">Initial Checks</th>
-        <th rowspan="2">Total</th>
-        <th colspan="6">Final Checks</th>
-        <th rowspan="2">Total</th>
-        <th rowspan="2">Grand Total</th>
-      </tr>
-      <tr>
-        <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
-        <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Data rows will be inserted here -->
-    </tbody>
-  </table>
+  <div id="container">
+    <div id="sidebar"></div>
+
+    <div id="main">
+      <h2>KISR QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
+      <table id="monthlyBreakdown">
+        <thead>
+          <tr>
+            <th rowspan="2">Done By</th>
+            <th colspan="6">Initial Checks</th>
+            <th rowspan="2">Total</th>
+            <th colspan="6">Final Checks</th>
+            <th rowspan="2">Total</th>
+            <th rowspan="2">Grand Total</th>
+          </tr>
+          <tr>
+            <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
+            <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
   <script>
+    // Load sidebar
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("sidebar").innerHTML = html);
+
     const firebaseConfig = {
       apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
       authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -91,8 +85,8 @@
           const month = date.getMonth(); // 0 = Jan, 9 = Oct
 
           let index = -1;
-          if (year === 2025 && month >= 9) index = month - 9;     // Oct–Dec 2025 → 0–2
-          if (year === 2026 && month <= 2) index = month + 3;     // Jan–Mar 2026 → 3–5
+          if (year === 2025 && month >= 9) index = month - 9;
+          if (year === 2026 && month <= 2) index = month + 3;
           if (index < 0 || index > 5) return;
 
           if (collection === 'initial_checks') counts[who].initial[index]++;
@@ -100,7 +94,7 @@
         });
       }
 
-      // Render cataloguer rows
+      // Render data
       cataloguers.forEach(name => {
         const init = counts[name].initial;
         const fin = counts[name].final;
@@ -117,7 +111,7 @@
         tableBody.innerHTML += row;
       });
 
-      // Render totals row
+      // Totals
       let totalRow = `<tr><td>Total</td>`;
       const initTotals = Array(6).fill(0);
       const finTotals = Array(6).fill(0);
@@ -142,6 +136,3 @@
   </script>
 </body>
 </html>
-
-
-
