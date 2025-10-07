@@ -3,52 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <title>Initial QA Check</title>
-
-  <!-- External CSS -->
   <link rel="stylesheet" href="css/initial.css">
-
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <div id="sidebar"></div>
-  <div id="main">
-    <h2>Initial QA — Submission Form</h2>
-    <input type="text" id="hrid" placeholder="HRID" required />
-    <input type="text" id="cataloguer" placeholder="Cataloguer" required />
-    <input type="date" id="dateIn" placeholder="Date in" required />
-    <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
-    <textarea id="errorDescription" placeholder="Error Description"></textarea>
-    <input type="date" id="dateOut" placeholder="Date Out" />
-    <select id="status">
-      <option value="Ok">Ok</option>
-      <option value="Rejected">Rejected</option>
-    </select>
-    <input type="text" id="qa" placeholder="QA" required />
-    <button id="submitBtn" onclick="submitEntry()">Submit</button>
-    <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-    <p id="msg"></p>
+  <div id="container">
+    <div id="sidebar"></div>
+    <div id="main">
+      <h2>Initial QA — Submission Form</h2>
+      <form id="qaForm">
+        <div class="form-row">
+          <input type="text" id="hrid" placeholder="HRID" required />
+          <input type="text" id="cataloguer" placeholder="Cataloguer" required />
+          <input type="date" id="dateIn" placeholder="Date In" required />
+        </div>
+        <div class="form-row">
+          <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
+          <textarea id="errorDescription" placeholder="Error Description"></textarea>
+        </div>
+        <div class="form-row">
+          <input type="date" id="dateOut" placeholder="Date Out" />
+          <select id="status">
+            <option value="Ok">Ok</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <input type="text" id="qa" placeholder="QA" required />
+        </div>
+        <div class="form-row">
+          <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
+          <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
+        </div>
+        <p id="msg"></p>
+      </form>
 
-    <h3>📋 Submitted Entries</h3>
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>Entry No.</th>
-          <th>HRID</th>
-          <th>Cataloguer</th>
-          <th>Date In</th>
-          <th>Error fields</th>
-          <th>Error Description</th>
-          <th>Date Out</th>
-          <th>Status</th>
-          <th>QA</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <h3>📋 Submitted Entries</h3>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Entry No.</th>
+            <th>HRID</th>
+            <th>Cataloguer</th>
+            <th>Date In</th>
+            <th>Error fields</th>
+            <th>Error Description</th>
+            <th>Date Out</th>
+            <th>Status</th>
+            <th>QA</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
 <script>
@@ -57,7 +65,6 @@
     .then(res => res.text())
     .then(html => document.getElementById('sidebar').innerHTML = html);
 
-  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
     authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -76,7 +83,6 @@
 
   async function submitEntry() {
     const msg = document.getElementById('msg');
-
     const hridEl = document.getElementById("hrid");
     const cataloguerEl = document.getElementById("cataloguer");
     const dateInEl = document.getElementById("dateIn");
@@ -159,7 +165,6 @@
   async function editEntry(id) {
     const doc = await db.collection("initial_checks").doc(id).get();
     if (!doc.exists) return;
-
     const d = doc.data();
     document.getElementById("hrid").value = d.hrid || "";
     document.getElementById("cataloguer").value = d.cataloguer || "";
@@ -167,10 +172,8 @@
     document.getElementById("errorFields").value = d.errorFields || "";
     document.getElementById("errorDescription").value = d.errorDescription || "";
     document.getElementById("dateOut").value = d.dateOut || "";
-    const validStatuses = ["Ok", "Rejected"];
-    document.getElementById("status").value = validStatuses.includes(d.status) ? d.status : "Ok";
+    document.getElementById("status").value = d.status || "Ok";
     document.getElementById("qa").value = d.qa || "";
-
     editingId = id;
     document.getElementById("submitBtn").textContent = "Update";
     document.getElementById("cancelBtn").style.display = "inline-block";
