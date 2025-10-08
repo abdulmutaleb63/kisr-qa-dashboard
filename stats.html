@@ -52,10 +52,12 @@
   </div>
 
   <script>
+    // Load sidebar
     fetch('sidebar.html')
       .then(res => res.text())
       .then(html => document.getElementById('sidebar').innerHTML = html);
 
+    // Firebase setup
     const firebaseConfig = {
       apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
       authDomain: "kisr-qa-dashboard.firebaseapp.com",
@@ -69,6 +71,7 @@
     const cataloguers = ['Mutaleb', 'Aziz'];
     const collections = ['initial_checks', 'final_checks'];
 
+    // Populate table
     auth.onAuthStateChanged(async (user) => {
       if (!user) return window.location.href = "index.html";
       const tableBody = document.querySelector("#monthlyBreakdown tbody");
@@ -144,23 +147,36 @@
       tableBody.innerHTML += totalRow;
     });
 
+    // ✅ Improved PDF Download Function (Fix #2)
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF('l', 'mm', 'a4');
       const element = document.querySelector('#pdfContent');
 
+      // Temporarily remove overflow to capture full content
+      const main = document.querySelector('#main');
+      const oldOverflow = main.style.overflow;
+      main.style.overflow = 'visible';
+
       const canvas = await html2canvas(element, {
-        scale: 2,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        useCORS: true
+        scale: 2.5, // higher scale = sharper text
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        backgroundColor: "#ffffff"
       });
+
+      // Restore overflow
+      main.style.overflow = oldOverflow;
 
       const imgData = canvas.toDataURL('image/png');
       const pageWidth = doc.internal.pageSize.getWidth();
       const imgWidth = pageWidth - 20;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+      // Add image to PDF
       doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
       doc.save('QA-Monthly-Breakdown.pdf');
     }
