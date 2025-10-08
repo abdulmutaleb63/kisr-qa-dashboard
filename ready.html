@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ready Reports</title>
+  <link rel="stylesheet" href="css/ready.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div id="container">
+    <div id="sidebar"></div>
+
+    <div id="main">
+      <h2>Ready Reports for Injection</h2>
+      <table id="readyTable">
+        <thead>
+          <tr>
+            <th>HRID</th>
+            <th>Title</th>
+            <th>UUID</th>
+            <th>Injected</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Load sidebar
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("sidebar").innerHTML = html);
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "index.html";
+      else loadReadyReports();
+    });
+
+    async function loadReadyReports() {
+      const tbody = document.querySelector("#readyTable tbody");
+      tbody.innerHTML = "";
+
+      const snap = await db.collection("final_checks")
+        .where("status", "==", "Ok")
+        .orderBy("createdAt", "desc")
+        .get();
+
+      snap.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${data.hrid || ""}</td>
+          <td>${data.title || ""}</td>
+          <td>${data.uuid || ""}</td>
+          <td>
+            <input type="checkbox" ${data.injected ? "checked" : ""} onchange="toggleInjected('${doc.id}', this.checked)">
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function toggleInjected(docId, isChecked) {
+      try {
+        await db.collection("final_checks").doc(docId).update({ injected: isChecked });
+      } catch (error) {
+        alert("❌ Failed to update injected status: " + error.message);
+      }
+    }
+  </script>
+  <script src="js/common.js"></script>
+</body>
+</html>
