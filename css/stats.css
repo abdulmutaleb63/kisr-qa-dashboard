@@ -138,12 +138,5 @@ th {
   border: 1px solid #ccc;
 }
 
-#pdfWrapper, #pdfContent {
-  overflow: visible !important;
-  display: block;
-}
 
-#main {
-  overflow: visible !important;
-}
 
