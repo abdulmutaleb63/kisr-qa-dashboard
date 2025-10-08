@@ -13,26 +13,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-  <!-- Styles -->
+  <!-- External Styles -->
   <link rel="stylesheet" href="css/stats.css">
-
-  <style>
-    #pdfWrapper {
-      overflow-x: auto;
-      width: 100%;
-    }
-    #pdfContent {
-      display: inline-block;
-    }
-    .download-container {
-      text-align: right;
-      margin-bottom: 10px;
-    }
-  </style>
 </head>
 <body>
   <div id="container">
     <div id="sidebar"></div>
+
     <div id="main">
       <h2>QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
 
@@ -178,6 +165,7 @@
       doc.save('QA-Monthly-Breakdown.pdf');
     }
   </script>
+
   <script src="js/common.js"></script>
 </body>
 </html>
