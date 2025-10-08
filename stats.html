@@ -9,13 +9,31 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
 
-  <!-- jsPDF -->
+  <!-- jsPDF + html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/stats.css">
-  
+
+  <style>
+    .download-container {
+      text-align: right;
+      margin-bottom: 15px;
+    }
+    #downloadBtn {
+      background-color: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #downloadBtn:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
   <div id="container">
@@ -28,27 +46,30 @@
         <button id="downloadBtn" onclick="downloadPDF()">Download PDF</button>
       </div>
 
-      <table id="monthlyBreakdown">
-        <thead>
-          <tr>
-            <th rowspan="2">Done By</th>
-            <th colspan="6">Initial Checks</th>
-            <th rowspan="2">Total</th>
-            <th colspan="6">Final Checks</th>
-            <th rowspan="2">Total</th>
-            <th rowspan="2">Grand Total</th>
-          </tr>
-          <tr>
-            <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
-            <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div id="pdfWrapper"> <!-- wrapper around the content to export -->
+        <table id="monthlyBreakdown">
+          <thead>
+            <tr>
+              <th rowspan="2">Done By</th>
+              <th colspan="6">Initial Checks</th>
+              <th rowspan="2">Total</th>
+              <th colspan="6">Final Checks</th>
+              <th rowspan="2">Total</th>
+              <th rowspan="2">Grand Total</th>
+            </tr>
+            <tr>
+              <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
+              <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
+    // Load sidebar
     fetch('sidebar.html')
       .then(res => res.text())
       .then(html => document.getElementById('sidebar').innerHTML = html);
@@ -141,34 +162,30 @@
       tableBody.innerHTML += totalRow;
     });
 
-async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
 
-  const element = document.querySelector('#monthlyBreakdown');
+      const element = document.querySelector('#pdfWrapper'); // wrapper that includes heading + table
 
-  // Scale table to fit within A4 width
-  const canvas = await html2canvas(element, {
-    scale: 2, // increases sharpness
-    scrollX: 0,
-    scrollY: -window.scrollY,
-    windowWidth: document.documentElement.scrollWidth,
-    useCORS: true
-  });
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.scrollWidth,
+        useCORS: true
+      });
 
-  const imgData = canvas.toDataURL('image/png');
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const imgWidth = pageWidth - 20; // leave margin
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const imgWidth = pageWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-  doc.save('QA-Monthly-Breakdown.pdf');
-}
-
+      doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
       doc.save('QA-Monthly-Breakdown.pdf');
     }
   </script>
   <script src="js/common.js"></script>
 </body>
 </html>
+
