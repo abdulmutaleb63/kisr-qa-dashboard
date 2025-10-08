@@ -29,8 +29,15 @@
             <option value="Ok">Ok</option>
             <option value="Rejected">Rejected</option>
           </select>
-          <input type="text" id="qa" placeholder="QA" required />
+
+          <!-- ✅ QA dropdown -->
+          <select id="qa" required>
+            <option value="">Select QA</option>
+            <option value="Mutaleb">Mutaleb</option>
+            <option value="Aziz">Aziz</option>
+          </select>
         </div>
+
         <div class="form-row">
           <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
           <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
@@ -76,7 +83,7 @@
 
   let editingId = null;
 
-  // ✅ Automatically set today's date for dateIn and dateOut
+  // ✅ Auto-set today's date for dateIn/dateOut
   document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateIn').value = today;
@@ -84,30 +91,31 @@
   });
 
   auth.onAuthStateChanged(user => {
-    if (!user) window.location.href = 'index.html';
-    else loadEntries();
+    if (!user) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // ✅ Auto-set QA dropdown based on user email
+    const qaSelect = document.getElementById("qa");
+    const email = user.email.toLowerCase();
+    if (email === "amaslamani@kisr.edu.kw") qaSelect.value = "Mutaleb";
+    else if (email === "aabdulrazzaq@kisr.edu.kw") qaSelect.value = "Aziz";
+
+    loadEntries();
   });
 
   async function submitEntry() {
     const msg = document.getElementById('msg');
-    const hridEl = document.getElementById("hrid");
-    const cataloguerEl = document.getElementById("cataloguer");
-    const dateInEl = document.getElementById("dateIn");
-    const errorFieldsEl = document.getElementById("errorFields");
-    const errorDescriptionEl = document.getElementById("errorDescription");
-    const dateOutEl = document.getElementById("dateOut");
-    const statusEl = document.getElementById("status");
-    const qaEl = document.getElementById("qa");
-
     const data = {
-      hrid: hridEl.value.trim(),
-      cataloguer: cataloguerEl.value.trim(),
-      dateIn: dateInEl.value,
-      errorFields: errorFieldsEl.value.trim(),
-      errorDescription: errorDescriptionEl.value.trim(),
-      dateOut: dateOutEl.value,
-      status: statusEl.value,
-      qa: qaEl.value.trim()
+      hrid: document.getElementById("hrid").value.trim(),
+      cataloguer: document.getElementById("cataloguer").value.trim(),
+      dateIn: document.getElementById("dateIn").value,
+      errorFields: document.getElementById("errorFields").value.trim(),
+      errorDescription: document.getElementById("errorDescription").value.trim(),
+      dateOut: document.getElementById("dateOut").value,
+      status: document.getElementById("status").value,
+      qa: document.getElementById("qa").value
     };
 
     try {
@@ -133,10 +141,14 @@
 
   function clearForm() {
     document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
-    // Reset to today's date again after clearing
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateIn').value = today;
     document.getElementById('dateOut').value = today;
+
+    // Keep QA default based on login
+    auth.currentUser && auth.currentUser.email.toLowerCase() === "amaslamani@kisr.edu.kw"
+      ? document.getElementById("qa").value = "Mutaleb"
+      : document.getElementById("qa").value = "Aziz";
   }
 
   async function loadEntries() {
@@ -146,23 +158,23 @@
     let index = 1;
     snap.forEach(doc => {
       const d = doc.data();
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${index++}</td>
-        <td>${d.hrid || ""}</td>
-        <td>${d.cataloguer || ""}</td>
-        <td>${d.dateIn || ""}</td>
-        <td>${d.errorFields || ""}</td>
-        <td>${d.errorDescription || ""}</td>
-        <td>${d.dateOut || ""}</td>
-        <td>${d.status || ""}</td>
-        <td>${d.qa || ""}</td>
-        <td class="actions">
-          <button onclick="editEntry('${doc.id}')">✏️</button>
-          <button onclick="deleteEntry('${doc.id}')">🗑️</button>
-        </td>
-      `;
-      tbody.appendChild(row);
+      const row = `
+        <tr>
+          <td>${index++}</td>
+          <td>${d.hrid || ""}</td>
+          <td>${d.cataloguer || ""}</td>
+          <td>${d.dateIn || ""}</td>
+          <td>${d.errorFields || ""}</td>
+          <td>${d.errorDescription || ""}</td>
+          <td>${d.dateOut || ""}</td>
+          <td>${d.status || ""}</td>
+          <td>${d.qa || ""}</td>
+          <td class="actions">
+            <button onclick="editEntry('${doc.id}')">✏️</button>
+            <button onclick="deleteEntry('${doc.id}')">🗑️</button>
+          </td>
+        </tr>`;
+      tbody.innerHTML += row;
     });
   }
 
@@ -199,6 +211,6 @@
     document.getElementById("msg").textContent = "Edit cancelled.";
   }
 </script>
-  <script src="js/common.js"></script>
+<script src="js/common.js"></script>
 </body>
 </html>
