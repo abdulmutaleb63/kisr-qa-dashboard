@@ -147,39 +147,47 @@
       tableBody.innerHTML += totalRow;
     });
 
-    // ✅ Improved PDF Download Function (Fix #2)
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('l', 'mm', 'a4');
-      const element = document.querySelector('#pdfContent');
+ async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'mm', 'a4');
 
-      // Temporarily remove overflow to capture full content
-      const main = document.querySelector('#main');
-      const oldOverflow = main.style.overflow;
-      main.style.overflow = 'visible';
+  const element = document.querySelector('#pdfContent');
 
-      const canvas = await html2canvas(element, {
-        scale: 2.5, // higher scale = sharper text
-        useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        backgroundColor: "#ffffff"
-      });
+  // Clone content to isolate from flex/overflow issues
+  const clone = element.cloneNode(true);
+  clone.style.position = 'absolute';
+  clone.style.left = '0';
+  clone.style.top = '0';
+  clone.style.width = '100%';
+  clone.style.background = '#ffffff';
+  clone.style.zIndex = '9999';
+  clone.style.padding = '20px';
 
-      // Restore overflow
-      main.style.overflow = oldOverflow;
+  document.body.appendChild(clone);
 
-      const imgData = canvas.toDataURL('image/png');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const imgWidth = pageWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // Capture the cloned element
+  const canvas = await html2canvas(clone, {
+    scale: 2.5,
+    useCORS: true,
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: clone.scrollWidth,
+    windowHeight: clone.scrollHeight,
+    backgroundColor: "#ffffff"
+  });
 
-      // Add image to PDF
-      doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-      doc.save('QA-Monthly-Breakdown.pdf');
-    }
+  // Remove clone after capture
+  clone.remove();
+
+  const imgData = canvas.toDataURL('image/png');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const imgWidth = pageWidth - 20;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+  doc.save('QA-Monthly-Breakdown.pdf');
+}
+
   </script>
 
   <script src="js/common.js"></script>
