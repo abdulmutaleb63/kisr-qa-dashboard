@@ -76,6 +76,13 @@
 
   let editingId = null;
 
+  // ✅ Automatically set today's date for dateIn and dateOut
+  document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateIn').value = today;
+    document.getElementById('dateOut').value = today;
+  });
+
   auth.onAuthStateChanged(user => {
     if (!user) window.location.href = 'index.html';
     else loadEntries();
@@ -126,6 +133,10 @@
 
   function clearForm() {
     document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
+    // Reset to today's date again after clearing
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateIn').value = today;
+    document.getElementById('dateOut').value = today;
   }
 
   async function loadEntries() {
@@ -191,4 +202,5 @@
   <script src="js/common.js"></script>
 </body>
 </html>
+
 
