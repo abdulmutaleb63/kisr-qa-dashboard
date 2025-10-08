@@ -14,6 +14,15 @@
 
     <div id="main">
       <h2>Ready Reports for Injection</h2>
+
+      <!-- ✅ Filter dropdown -->
+      <label for="filter" style="font-weight: 500;">Filter:</label>
+      <select id="filter" onchange="loadReadyReports()">
+        <option value="all">All</option>
+        <option value="notInjected">Not Injected</option>
+        <option value="injected">Injected</option>
+      </select>
+
       <table id="readyTable">
         <thead>
           <tr>
@@ -50,6 +59,7 @@
     });
 
     async function loadReadyReports() {
+      const filterValue = document.getElementById("filter").value;
       const tbody = document.querySelector("#readyTable tbody");
       tbody.innerHTML = "";
 
@@ -60,6 +70,14 @@
 
       snap.forEach(doc => {
         const data = doc.data();
+
+        if (
+          (filterValue === "injected" && !data.injected) ||
+          (filterValue === "notInjected" && data.injected)
+        ) {
+          return; // Skip this entry
+        }
+
         const createdAt = data.createdAt?.toDate?.().toISOString().split("T")[0] || "";
 
         const row = document.createElement("tr");
@@ -79,6 +97,7 @@
     async function toggleInjected(docId, isChecked) {
       try {
         await db.collection("final_checks").doc(docId).update({ injected: isChecked });
+        loadReadyReports(); // Refresh view after change
       } catch (error) {
         alert("❌ Failed to update injected status: " + error.message);
       }
