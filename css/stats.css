@@ -124,7 +124,6 @@ th {
 
     #monthlyBreakdown thead tr:nth-child(1) {
       background-color: #007bff;
-      color: white;
     }
 
     #monthlyBreakdown thead tr:nth-child(2) {
