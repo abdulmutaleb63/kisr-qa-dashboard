@@ -21,6 +21,7 @@
             <th>Title</th>
             <th>UUID</th>
             <th>Injected</th>
+            <th>Appended On</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -59,8 +60,9 @@
 
       snap.forEach(doc => {
         const data = doc.data();
-        const row = document.createElement("tr");
+        const createdAt = data.createdAt?.toDate?.().toISOString().split("T")[0] || "";
 
+        const row = document.createElement("tr");
         row.innerHTML = `
           <td>${data.hrid || ""}</td>
           <td>${data.title || ""}</td>
@@ -68,6 +70,7 @@
           <td>
             <input type="checkbox" ${data.injected ? "checked" : ""} onchange="toggleInjected('${doc.id}', this.checked)">
           </td>
+          <td>${createdAt}</td>
         `;
         tbody.appendChild(row);
       });
