@@ -34,7 +34,13 @@
           </select>
           <input type="text" id="uuid" placeholder="UUID" />
           <input type="text" id="title" placeholder="Title" />
-          <input type="text" id="qa" placeholder="QA" />
+
+          <!-- ✅ QA Dropdown -->
+          <select id="qa" required>
+            <option value="">Select QA</option>
+            <option value="Mutaleb">Mutaleb</option>
+            <option value="Aziz">Aziz</option>
+          </select>
         </div>
 
         <div class="form-row">
@@ -83,7 +89,7 @@
     const db = firebase.firestore();
     let editingId = null;
 
-    // ✅ Automatically set today's date for dateIn and dateOut on load
+    // ✅ Auto-set today's date for dateIn/dateOut
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('dateIn').value = today;
@@ -91,8 +97,18 @@
     });
 
     auth.onAuthStateChanged(user => {
-      if (!user) window.location.href = "index.html";
-      else loadEntries();
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      // ✅ Auto-set QA dropdown based on logged-in user
+      const qaSelect = document.getElementById("qa");
+      const email = user.email.toLowerCase();
+      if (email === "amaslamani@kisr.edu.kw") qaSelect.value = "Mutaleb";
+      else if (email === "aabdulrazzaq@kisr.edu.kw") qaSelect.value = "Aziz";
+
+      loadEntries();
     });
 
     async function submitEntry() {
@@ -107,7 +123,7 @@
         status: document.getElementById("status").value,
         uuid: document.getElementById("uuid").value.trim(),
         title: document.getElementById("title").value.trim(),
-        qa: document.getElementById("qa").value.trim()
+        qa: document.getElementById("qa").value
       };
 
       try {
@@ -133,10 +149,17 @@
 
     function clearForm() {
       document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
-      // Reset to today's date again after clearing
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('dateIn').value = today;
       document.getElementById('dateOut').value = today;
+
+      // Keep QA default based on login
+      const user = auth.currentUser;
+      if (user) {
+        const email = user.email.toLowerCase();
+        document.getElementById("qa").value =
+          email === "amaslamani@kisr.edu.kw" ? "Mutaleb" : "Aziz";
+      }
     }
 
     async function loadEntries() {
