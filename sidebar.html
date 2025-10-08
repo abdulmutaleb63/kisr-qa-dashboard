@@ -1,7 +1,6 @@
 <link rel="stylesheet" href="css/sidebar-style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-
 <div id="sidebar">
   <h3 class="dashboard-label">SRID QA<br>Dashboard</h3>
   <nav>
@@ -13,4 +12,20 @@
       <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
   </nav>
+
+  <div id="userDisplay"></div>
 </div>
+
+<script>
+  const nameMap = {
+    "amaslamani@kisr.edu.kw": "Abdul Mutaleb Almuslimani",
+    "aabdulrazzaq@kisr.edu.kw": "Abdulaziz Alabdulrazzaq"
+  };
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      const fullName = nameMap[user.email] || user.email;
+      document.getElementById("userDisplay").innerHTML = `<p>${fullName}</p>`;
+    }
+  });
+</script>
