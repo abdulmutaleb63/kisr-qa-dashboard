@@ -9,9 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
 
-  <!-- jsPDF + html2canvas -->
+  <!-- jsPDF + autoTable -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <!-- External Styles -->
   <link rel="stylesheet" href="css/stats.css">
@@ -147,47 +147,47 @@
       tableBody.innerHTML += totalRow;
     });
 
- async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('l', 'mm', 'a4');
+    // ✅ New jsPDF AutoTable PDF Export (No Clipping, Crisp Output)
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4');
 
-  const element = document.querySelector('#pdfContent');
+      // Add title
+      doc.setFontSize(14);
+      doc.text("QA Monthly Breakdown (Oct 2025 – Mar 2026)", 14, 15);
 
-  // Clone content to isolate from flex/overflow issues
-  const clone = element.cloneNode(true);
-  clone.style.position = 'absolute';
-  clone.style.left = '0';
-  clone.style.top = '0';
-  clone.style.width = '100%';
-  clone.style.background = '#ffffff';
-  clone.style.zIndex = '9999';
-  clone.style.padding = '20px';
+      // Convert table to PDF
+      doc.autoTable({
+        html: '#monthlyBreakdown',
+        startY: 25,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [0, 123, 255],
+          textColor: 255,
+          halign: 'center',
+          valign: 'middle',
+          lineWidth: 0.1
+        },
+        bodyStyles: {
+          halign: 'center',
+          valign: 'middle'
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          lineColor: [220, 220, 220]
+        },
+        margin: { left: 10, right: 10 },
+        tableWidth: 'auto',
+        didDrawPage: (data) => {
+          const pageCount = doc.internal.getNumberOfPages();
+          doc.setFontSize(8);
+          doc.text(`Page ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 10);
+        }
+      });
 
-  document.body.appendChild(clone);
-
-  // Capture the cloned element
-  const canvas = await html2canvas(clone, {
-    scale: 2.5,
-    useCORS: true,
-    scrollX: 0,
-    scrollY: 0,
-    windowWidth: clone.scrollWidth,
-    windowHeight: clone.scrollHeight,
-    backgroundColor: "#ffffff"
-  });
-
-  // Remove clone after capture
-  clone.remove();
-
-  const imgData = canvas.toDataURL('image/png');
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const imgWidth = pageWidth - 20;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-  doc.save('QA-Monthly-Breakdown.pdf');
-}
-
+      doc.save('QA-Monthly-Breakdown.pdf');
+    }
   </script>
 
   <script src="js/common.js"></script>
