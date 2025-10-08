@@ -141,30 +141,30 @@
       tableBody.innerHTML += totalRow;
     });
 
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
 
-      const element = document.querySelector('#monthlyBreakdown');
-      const canvas = await html2canvas(element);
+  const element = document.querySelector('#monthlyBreakdown');
 
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 190;
-      const pageHeight = 280;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // Scale table to fit within A4 width
+  const canvas = await html2canvas(element, {
+    scale: 2, // increases sharpness
+    scrollX: 0,
+    scrollY: -window.scrollY,
+    windowWidth: document.documentElement.scrollWidth,
+    useCORS: true
+  });
 
-      let heightLeft = imgHeight;
-      let position = 10;
+  const imgData = canvas.toDataURL('image/png');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const imgWidth = pageWidth - 20; // leave margin
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        doc.addPage();
-        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+  doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+  doc.save('QA-Monthly-Breakdown.pdf');
+}
 
       doc.save('QA-Monthly-Breakdown.pdf');
     }
