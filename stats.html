@@ -9,12 +9,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
 
-  <!-- jsPDF & autoTable -->
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/stats.css">
+  
 </head>
 <body>
   <div id="container">
@@ -23,9 +24,9 @@
     <div id="main">
       <h2>QA Monthly Breakdown (Oct 2025 – Mar 2026)</h2>
 
-      <button onclick="downloadPDF()" style="margin-bottom: 15px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-        Download PDF
-      </button>
+      <div class="download-container">
+        <button id="downloadBtn" onclick="downloadPDF()">Download PDF</button>
+      </div>
 
       <table id="monthlyBreakdown">
         <thead>
@@ -140,26 +141,34 @@
       tableBody.innerHTML += totalRow;
     });
 
-    function downloadPDF() {
+    async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      doc.setFontSize(14);
-      doc.text("QA Monthly Breakdown (Oct 2025 – Mar 2026)", 14, 15);
+      const element = document.querySelector('#monthlyBreakdown');
+      const canvas = await html2canvas(element);
 
-      doc.autoTable({
-        html: '#monthlyBreakdown',
-        startY: 20,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 123, 255] },
-        styles: { fontSize: 8, cellPadding: 2 }
-      });
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 190;
+      const pageHeight = 280;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      doc.save('QA_Monthly_Breakdown.pdf');
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        doc.addPage();
+        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      doc.save('QA-Monthly-Breakdown.pdf');
     }
   </script>
-
   <script src="js/common.js"></script>
 </body>
 </html>
-
