@@ -169,42 +169,48 @@
       }
     }
 
-    async function loadEntries() {
-      const tbody = document.querySelector("#dataTable tbody");
-      tbody.innerHTML = "";
-      const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").limit(50).get();
-      let count = 1;
+  async function loadEntries() {
+  const tbody = document.querySelector("#dataTable tbody");
+  tbody.innerHTML = "";
 
-      const formatDate = (dateStr) => {
-      if (!dateStr) return "";
-      const [year, month, day] = dateStr.split("-");
-      return `${day}/${month}/${year}`;
-    };
+  const snapshot = await db
+    .collection("final_checks")
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
 
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const row = `
-          <tr>
-            <td>${count++}</td>
-            <td>${d.hrid || ""}</td>
-            <td>${d.cataloguer || ""}</td>
-            <td>${formatDate(d.dateIn) || ""}</td>
-            <td>${d.errorFields || ""}</td>
-            <td>${d.errorDescription || ""}</td>
-            <td>${formatDate(d.dateOut) || ""}</td>
-            <td>${d.status || ""}</td>
-            <td>${d.uuid || ""}</td>
-            <td>${d.title || ""}</td>
-            <td>${d.qa || ""}</td>
-            <td class="actions">
-              <button onclick="editEntry('${doc.id}')">✏️</button>
-              <button onclick="deleteEntry('${doc.id}')">🗑️</button>
-            </td>
-          </tr>`;
-        tbody.innerHTML += row;
-      });
-    }
+  let index = snapshot.size; // Start from total and count down
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    const row = `
+      <tr>
+        <td>${index--}</td>
+        <td>${d.hrid || ""}</td>
+        <td>${d.cataloguer || ""}</td>
+        <td>${formatDate(d.dateIn) || ""}</td>
+        <td>${d.errorFields || ""}</td>
+        <td>${d.errorDescription || ""}</td>
+        <td>${formatDate(d.dateOut) || ""}</td>
+        <td>${d.status || ""}</td>
+        <td>${d.uuid || ""}</td>
+        <td>${d.title || ""}</td>
+        <td>${d.qa || ""}</td>
+        <td class="actions">
+          <button onclick="editEntry('${doc.id}')">✏️</button>
+          <button onclick="deleteEntry('${doc.id}')">🗑️</button>
+        </td>
+      </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+    
     async function deleteEntry(id) {
       if (confirm("Are you sure you want to delete this entry?")) {
         await db.collection("final_checks").doc(id).delete();
