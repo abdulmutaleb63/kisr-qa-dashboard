@@ -69,7 +69,16 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="spinnerRow">
+  <tr>
+    <td colspan="10">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+      </div>
+    </td>
+  </tr>
+</tbody>
+<tbody id="entryBody"></tbody>
       </table>
     </div>
   </div>
@@ -162,11 +171,18 @@
   }
 
 async function loadEntries() {
-  const tbody = document.querySelector('#dataTable tbody');
-  tbody.innerHTML = "";
+  const spinnerRow = document.getElementById('spinnerRow');
+  const tbody = document.getElementById('entryBody');
+
+  // Show spinner, clear old entries
+  spinnerRow.style.display = '';
+  tbody.innerHTML = '';
 
   const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
   let index = snap.size;
+
+  // Hide spinner after loading
+  spinnerRow.style.display = 'none';
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
@@ -195,7 +211,8 @@ async function loadEntries() {
     tbody.innerHTML += row;
   });
 }
-     
+    
+
   async function deleteEntry(id) {
     if (confirm("Delete this entry?")) {
       await db.collection("initial_checks").doc(id).delete();
