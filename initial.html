@@ -16,13 +16,22 @@
       <form id="qaForm">
         <div class="form-row">
           <input type="text" id="hrid" placeholder="HRID" required />
-          <input type="text" id="cataloguer" placeholder="Cataloguer" required />
+
+          <!-- ✅ Cataloguer dropdown (with editable input) -->
+          <input list="cataloguerList" id="cataloguer" placeholder="Cataloguer" required />
+          <datalist id="cataloguerList">
+            <option value="Rania"></option>
+            <option value="Ahmad"></option>
+          </datalist>
+
           <input type="date" id="dateIn" placeholder="Date In" required />
         </div>
+
         <div class="form-row">
           <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
           <textarea id="errorDescription" placeholder="Error Description"></textarea>
         </div>
+
         <div class="form-row">
           <input type="date" id="dateOut" placeholder="Date Out" />
           <select id="status">
@@ -145,9 +154,11 @@
     document.getElementById('dateOut').value = today;
 
     // Keep QA default based on login
-    auth.currentUser && auth.currentUser.email.toLowerCase() === "amaslamani@kisr.edu.kw"
-      ? document.getElementById("qa").value = "Mutaleb"
-      : document.getElementById("qa").value = "Aziz";
+    if (auth.currentUser) {
+      const email = auth.currentUser.email.toLowerCase();
+      if (email === "amaslamani@kisr.edu.kw") document.getElementById("qa").value = "Mutaleb";
+      else if (email === "aabdulrazzaq@kisr.edu.kw") document.getElementById("qa").value = "Aziz";
+    }
   }
 
   async function loadEntries() {
@@ -188,6 +199,7 @@
     const doc = await db.collection("initial_checks").doc(id).get();
     if (!doc.exists) return;
     const d = doc.data();
+
     document.getElementById("hrid").value = d.hrid || "";
     document.getElementById("cataloguer").value = d.cataloguer || "";
     document.getElementById("dateIn").value = d.dateIn || "";
@@ -196,6 +208,7 @@
     document.getElementById("dateOut").value = d.dateOut || "";
     document.getElementById("status").value = d.status || "Ok";
     document.getElementById("qa").value = d.qa || "";
+
     editingId = id;
     document.getElementById("submitBtn").textContent = "Update";
     document.getElementById("cancelBtn").style.display = "inline-block";
