@@ -166,6 +166,13 @@
     tbody.innerHTML = "";
     const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
     let index = 1;
+
+    const formatDate = (dateStr) => {
+      if (!dateStr) return "";
+      const [year, month, day] = dateStr.split("-");
+      return `${day}/${month}/${year}`;
+    };
+
     snap.forEach(doc => {
       const d = doc.data();
       const row = `
@@ -173,10 +180,10 @@
           <td>${index++}</td>
           <td>${d.hrid || ""}</td>
           <td>${d.cataloguer || ""}</td>
-          <td>${d.dateIn || ""}</td>
+          <td>${formatDate(d.dateIn) || ""}</td>
           <td>${d.errorFields || ""}</td>
           <td>${d.errorDescription || ""}</td>
-          <td>${d.dateOut || ""}</td>
+          <td>${formatDate(d.dateOut) || ""}</td>
           <td>${d.status || ""}</td>
           <td>${d.qa || ""}</td>
           <td class="actions">
