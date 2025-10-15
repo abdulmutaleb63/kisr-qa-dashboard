@@ -75,7 +75,16 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="spinnerRow">
+  <tr>
+    <td colspan="10">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+      </div>
+    </td>
+  </tr>
+</tbody>
+<tbody id="entryBody"></tbody>
       </table>
     </div>
   </div>
@@ -169,8 +178,12 @@
       }
     }
 
-  async function loadEntries() {
-  const tbody = document.querySelector("#dataTable tbody");
+async function loadEntries() {
+  const spinnerRow = document.getElementById("spinnerRow");
+  const tbody = document.getElementById("entryBody");
+
+  // Show spinner
+  spinnerRow.style.display = "";
   tbody.innerHTML = "";
 
   const snapshot = await db
@@ -179,13 +192,16 @@
     .limit(50)
     .get();
 
-  let index = snapshot.size; // Start from total and count down
+  let index = snapshot.size;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
   };
+
+  // Hide spinner once data is loaded
+  spinnerRow.style.display = "none";
 
   snapshot.forEach(doc => {
     const d = doc.data();
@@ -210,7 +226,9 @@
     tbody.innerHTML += row;
   });
 }
+
     
+
     async function deleteEntry(id) {
       if (confirm("Are you sure you want to delete this entry?")) {
         await db.collection("final_checks").doc(id).delete();
