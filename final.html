@@ -17,7 +17,14 @@
       <form id="qaForm">
         <div class="form-row">
           <input type="text" id="hrid" placeholder="HRID" />
-          <input type="text" id="cataloguer" placeholder="Cataloguer" />
+
+          <!-- ✅ Cataloguer dropdown + editable -->
+          <input list="cataloguerList" id="cataloguer" placeholder="Cataloguer" />
+          <datalist id="cataloguerList">
+            <option value="Rania"></option>
+            <option value="Ahmad"></option>
+          </datalist>
+
           <input type="date" id="dateIn" />
         </div>
 
@@ -74,6 +81,7 @@
   </div>
 
   <script>
+    // ✅ Load sidebar
     fetch("sidebar.html")
       .then(res => res.text())
       .then(html => document.getElementById("sidebar").innerHTML = html);
