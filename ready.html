@@ -7,6 +7,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+ 
 </head>
 <body>
   <div id="container">
@@ -33,7 +34,18 @@
             <th>Appended On</th>
           </tr>
         </thead>
-        <tbody></tbody>
+
+        <!-- ✅ Spinner inside the table below header -->
+        <tbody id="spinnerRow">
+          <tr>
+            <td colspan="5" style="text-align:center;">
+              <div class="spinner"></div>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- ✅ Actual data -->
+        <tbody id="readyTableBody"></tbody>
       </table>
     </div>
   </div>
@@ -60,49 +72,61 @@
 
     async function loadReadyReports() {
       const filterValue = document.getElementById("filter").value;
-      const tbody = document.querySelector("#readyTable tbody");
+      const tbody = document.getElementById("readyTableBody");
+      const spinnerRow = document.getElementById("spinnerRow");
+
+      // Show spinner and clear previous rows
+      spinnerRow.style.display = "table-row-group";
       tbody.innerHTML = "";
 
-      const snap = await db.collection("final_checks")
-        .where("status", "==", "Ok")
-        .orderBy("createdAt", "desc")
-        .get();
+      try {
+        const snap = await db.collection("final_checks")
+          .where("status", "==", "Ok")
+          .orderBy("createdAt", "desc")
+          .get();
 
-      snap.forEach(doc => {
-        const data = doc.data();
+        // Hide spinner after loading
+        spinnerRow.style.display = "none";
 
-        if (
-          (filterValue === "injected" && !data.injected) ||
-          (filterValue === "notInjected" && data.injected)
-        ) {
-          return; // Skip this entry
-        }
+        snap.forEach(doc => {
+          const data = doc.data();
 
-        const createdAt = data.createdAt?.toDate?.().toISOString().split("T")[0] || "";
+          // Apply filter
+          if (
+            (filterValue === "injected" && !data.injected) ||
+            (filterValue === "notInjected" && data.injected)
+          ) return;
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${data.hrid || ""}</td>
-          <td>${data.title || ""}</td>
-          <td>${data.uuid || ""}</td>
-          <td>
-            <input type="checkbox" ${data.injected ? "checked" : ""} onchange="toggleInjected('${doc.id}', this.checked)">
-          </td>
-          <td>${createdAt}</td>
-        `;
-        tbody.appendChild(row);
-      });
+          const createdAt = data.createdAt?.toDate?.().toISOString().split("T")[0] || "";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.hrid || ""}</td>
+            <td>${data.title || ""}</td>
+            <td>${data.uuid || ""}</td>
+            <td>
+              <input type="checkbox" ${data.injected ? "checked" : ""} onchange="toggleInjected('${doc.id}', this.checked)">
+            </td>
+            <td>${createdAt}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        spinnerRow.style.display = "none";
+        alert("❌ Failed to load ready reports: " + error.message);
+      }
     }
 
     async function toggleInjected(docId, isChecked) {
       try {
         await db.collection("final_checks").doc(docId).update({ injected: isChecked });
-        loadReadyReports(); // Refresh view after change
+        loadReadyReports(); // Refresh view
       } catch (error) {
         alert("❌ Failed to update injected status: " + error.message);
       }
     }
   </script>
+
   <script src="js/common.js"></script>
 </body>
 </html>
