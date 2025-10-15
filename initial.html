@@ -161,40 +161,41 @@
     }
   }
 
-  async function loadEntries() {
-    const tbody = document.querySelector('#dataTable tbody');
-    tbody.innerHTML = "";
-    const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
-    let index = 1;
+async function loadEntries() {
+  const tbody = document.querySelector('#dataTable tbody');
+  tbody.innerHTML = "";
 
-    const formatDate = (dateStr) => {
-      if (!dateStr) return "";
-      const [year, month, day] = dateStr.split("-");
-      return `${day}/${month}/${year}`;
-    };
+  const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
+  let index = snap.size;
 
-    snap.forEach(doc => {
-      const d = doc.data();
-      const row = `
-        <tr>
-          <td>${index++}</td>
-          <td>${d.hrid || ""}</td>
-          <td>${d.cataloguer || ""}</td>
-          <td>${formatDate(d.dateIn) || ""}</td>
-          <td>${d.errorFields || ""}</td>
-          <td>${d.errorDescription || ""}</td>
-          <td>${formatDate(d.dateOut) || ""}</td>
-          <td>${d.status || ""}</td>
-          <td>${d.qa || ""}</td>
-          <td class="actions">
-            <button onclick="editEntry('${doc.id}')">✏️</button>
-            <button onclick="deleteEntry('${doc.id}')">🗑️</button>
-          </td>
-        </tr>`;
-      tbody.innerHTML += row;
-    });
-  }
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
 
+  snap.forEach(doc => {
+    const d = doc.data();
+    const row = `
+      <tr>
+        <td>${index--}</td>
+        <td>${d.hrid || ""}</td>
+        <td>${d.cataloguer || ""}</td>
+        <td>${formatDate(d.dateIn) || ""}</td>
+        <td>${d.errorFields || ""}</td>
+        <td>${d.errorDescription || ""}</td>
+        <td>${formatDate(d.dateOut) || ""}</td>
+        <td>${d.status || ""}</td>
+        <td>${d.qa || ""}</td>
+        <td class="actions">
+          <button onclick="editEntry('${doc.id}')">✏️</button>
+          <button onclick="deleteEntry('${doc.id}')">🗑️</button>
+        </td>
+      </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+     
   async function deleteEntry(id) {
     if (confirm("Delete this entry?")) {
       await db.collection("initial_checks").doc(id).delete();
