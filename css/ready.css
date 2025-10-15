@@ -55,3 +55,18 @@ th, td {
 th {
   background-color: #f5f5f5;
 }
+
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #333;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      margin: 10px auto;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
