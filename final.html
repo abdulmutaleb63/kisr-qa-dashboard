@@ -18,12 +18,12 @@
         <div class="form-row">
           <input type="text" id="hrid" placeholder="HRID" />
 
-          <!-- ✅ Cataloguer dropdown + editable -->
-          <input list="cataloguerList" id="cataloguer" placeholder="Cataloguer" />
-          <datalist id="cataloguerList">
-            <option value="Rania"></option>
-            <option value="Ahmad"></option>
-          </datalist>
+          
+       <select id="cataloguer" required>
+        <option value="" disabled selected>Select Cataloguer</option>
+        <option value="Rania">Rania</option>
+        <option value="Ahmad">Ahmad</option>
+      </select>
 
           <input type="date" id="dateIn" />
         </div>
@@ -36,6 +36,7 @@
         <div class="form-row">
           <input type="date" id="dateOut" />
           <select id="status">
+            <option value="" disabled selected>Status</option>
             <option value="Ok">Ok</option>
             <option value="Rejected">Rejected</option>
           </select>
