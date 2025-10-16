@@ -22,7 +22,7 @@ body, html {
   z-index: 1000;
 }
 
-h3 {
+#sidebar .dashboard-label {
   color: white;
 }
 
