@@ -17,12 +17,11 @@
         <div class="form-row">
           <input type="text" id="hrid" placeholder="HRID" required />
 
-          <!-- ✅ Cataloguer dropdown (with editable input) -->
-          <input list="cataloguerList" id="cataloguer" placeholder="Cataloguer" required />
-          <datalist id="cataloguerList">
-            <option value="Rania"></option>
-            <option value="Ahmad"></option>
-          </datalist>
+        <select id="cataloguer" required>
+          <option value="" disabled selected>Select Cataloguer</option>
+          <option value="Rania">Rania</option>
+          <option value="Ahmad">Ahmad</option>
+        </select>
 
           <input type="date" id="dateIn" placeholder="Date In" required />
         </div>
