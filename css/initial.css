@@ -11,28 +11,21 @@ body {
   overflow-x: hidden;
 }
 
+/* Remove sidebar logic completely */
 #container {
-  display: flex;
-  min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  min-height: 100vh;
 }
 
-#sidebar {
-  width: 220px;
-  background: #f1f1f1;
-  padding: 20px;
-  flex-shrink: 0;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-}
+/* Top Navbar already handled elsewhere */
 
+/* Main content area (now full width) */
 #main {
-  flex: 1;
+  width: 100%;
   padding: 30px;
-  margin: 0;
+  margin: 0 auto;
   overflow-x: auto;
   background: #fcfcfc;
-  max-width: calc(100% - 220px);
 }
 
 h2, h3 {
@@ -88,13 +81,17 @@ button:hover {
   margin-top: 10px;
 }
 
-/* Table */
+/* Table Styling */
 table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin-top: 20px;
   background: white;
   border: 1px solid #ddd;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 th, td {
@@ -104,6 +101,11 @@ th, td {
   font-size: 14px;
   word-break: break-word;
 }
+
+/* Optional: Fine-tune specific column widths */
+th:nth-child(1), td:nth-child(1) { width: 60px; }   /* Entry No. */
+th:nth-child(2), td:nth-child(2) { width: 100px; }  /* HRID */
+th:nth-child(5), td:nth-child(5) { width: 120px; }  /* Error Fields */
 
 .actions button {
   margin-right: 5px;
@@ -118,7 +120,7 @@ th, td {
   }
 }
 
-
+/* Spinner */
 .spinner-container {
   text-align: center;
   padding: 20px;
