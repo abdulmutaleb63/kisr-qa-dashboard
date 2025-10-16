@@ -68,5 +68,5 @@ button[type="submit"]:hover {
 #login-msg {
   margin-top: 10px;
   font-size: 14px;
-  color: #d00;
+  color: green;
 }
