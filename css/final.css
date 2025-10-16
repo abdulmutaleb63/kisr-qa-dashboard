@@ -102,6 +102,10 @@ th, td {
   word-break: break-word;
 }
 
+th {
+  background-color: #f5f5f5;
+}
+
 /* Optional: Fine-tune specific column widths */
 th:nth-child(1), td:nth-child(1) { width: 60px; }   /* Entry No. */
 th:nth-child(2), td:nth-child(2) { width: 100px; }  /* HRID */
