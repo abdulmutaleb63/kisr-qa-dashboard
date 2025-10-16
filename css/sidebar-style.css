@@ -22,6 +22,10 @@ body, html {
   z-index: 1000;
 }
 
+h3 {
+  color: white;
+}
+
 /* ===== Branding label on the left */
 #sidebar .dashboard-label {
   font-size: 18px;
@@ -59,10 +63,6 @@ body, html {
   margin-right: 6px;
   font-size: 16px;
   transition: color 0.2s ease;
-}
-
-h3 {
-  color:white;
 }
 
 /* Hover effect */
