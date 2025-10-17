@@ -58,7 +58,7 @@ select, button {
 }
 
 button {
-  background-color: #189de4;
+  background-color: #00b71d;
   color: white;
   border: none;
   cursor: pointer;
@@ -66,7 +66,8 @@ button {
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #028f18;
+;
 }
 
 /* Table Styles */
