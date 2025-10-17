@@ -112,7 +112,7 @@ th {
 }
 
 #downloadBtn {
-  background-color: #198de4;
+  background-color: #00b71d;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -122,7 +122,7 @@ th {
 }
 
 #downloadBtn:hover {
-  background-color: #0056b3;
+  background-color: #028f18;
 }
 
 /* Table Row Highlighting */
