@@ -7,7 +7,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+
+ 
 </head>
+
 <body>
   <div id="container">
     <div id="sidebar"></div>
@@ -50,7 +53,6 @@
           <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
           <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
         </div>
-        <p id="msg"></p>
       </form>
 
       <h3>Submitted Entries</h3>
@@ -85,7 +87,7 @@
     </div>
   </div>
 
-  <!-- (Same <head> and <form> parts remain unchanged) -->
+  <div id="msg"></div>
 
 <script>
   // ✅ Load sidebar
@@ -101,7 +103,16 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+
   let editingId = null;
+
+  // ✅ Toast-style message
+  function showMsg(text, duration = 2500) {
+    const msg = document.getElementById('msg');
+    msg.textContent = text;
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', duration);
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
@@ -123,7 +134,6 @@
   });
 
   async function submitEntry() {
-    const msg = document.getElementById("msg");
     const data = {
       hrid: document.getElementById("hrid").value.trim(),
       cataloguer: document.getElementById("cataloguer").value.trim(),
@@ -140,16 +150,16 @@
     try {
       if (editingId) {
         await db.collection("final_checks").doc(editingId).update(data);
-        msg.textContent = "✅ Entry updated!";
+        showMsg("✅ Entry updated!");
         editingId = null;
       } else {
         await db.collection("final_checks").add({ ...data, createdAt: new Date() });
-        msg.textContent = "✅ Entry added!";
+        showMsg("✅ Entry added!");
       }
       clearForm();
       loadEntries();
     } catch (err) {
-      msg.textContent = "❌ Error: " + err.message;
+      showMsg("❌ Error: " + err.message);
     }
   }
 
@@ -209,29 +219,26 @@
     });
   }
 
-  // ✅ Inline Edit & Save Logic with Date Fix
+  // ✅ Inline editing logic with message alerts
   document.addEventListener("click", async (e) => {
     if (e.target.classList.contains("edit-btn")) {
       const row = e.target.closest("tr");
       const id = row.dataset.id;
       const cells = row.querySelectorAll("td");
-      const original = [...cells].map(c => c.innerText);
 
-      const dateFields = [3, 6]; // Index of dateIn and dateOut
-      for (let i = 1; i < cells.length - 1; i++) {
+      for (let i = 1; i <= 10; i++) {
         let val = cells[i].innerText.trim();
-        if (dateFields.includes(i) && val.includes("/")) {
+        if ((i === 3 || i === 6) && val.includes("/")) {
           const [d, m, y] = val.split("/");
           val = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
         }
-        cells[i].innerHTML = `<input type="text" value="${val}" style="width:100%;">`;
+        cells[i].innerHTML = `<input type="text" value="${val}" style="width:100%">`;
       }
 
       const actions = row.querySelector(".actions");
       actions.innerHTML = `
         <button class="save-btn">💾</button>
-        <button class="cancel-btn">❌</button>
-      `;
+        <button class="cancel-btn">❌</button>`;
 
       actions.querySelector(".save-btn").addEventListener("click", async () => {
         const inputs = row.querySelectorAll("input");
@@ -241,20 +248,24 @@
           let val = inputs[i].value.trim();
           if ((f === "dateIn" || f === "dateOut") && val.includes("/")) {
             const [d, m, y] = val.split("/");
-            val = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            val = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
           }
           updated[f] = val;
         });
 
         try {
           await db.collection("final_checks").doc(id).update(updated);
+          showMsg("✅ Entry updated!");
           loadEntries();
         } catch (err) {
-          alert("❌ Failed to update: " + err.message);
+          showMsg("❌ Failed to update: " + err.message);
         }
       });
 
-      actions.querySelector(".cancel-btn").addEventListener("click", () => loadEntries());
+      actions.querySelector(".cancel-btn").addEventListener("click", () => {
+        loadEntries();
+        showMsg("Edit cancelled.");
+      });
     }
 
     if (e.target.classList.contains("delete-btn")) {
@@ -262,10 +273,12 @@
       if (confirm("Delete this entry?")) {
         await db.collection("final_checks").doc(id).delete();
         loadEntries();
+        showMsg("🗑️ Entry deleted.");
       }
     }
   });
 </script>
-  <script src="js/common.js"></script>
+
+<script src="js/common.js"></script>
 </body>
 </html>
