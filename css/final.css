@@ -11,19 +11,6 @@ body {
   overflow-x: hidden;
 }
 
-   #msg {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #333;
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 14px;
-      z-index: 9999;
-      display: none;
-    }
-
 /* Remove sidebar logic completely */
 #container {
   width: 100%;
@@ -68,25 +55,76 @@ input, textarea, select {
   min-width: 200px;
 }
 
+   #msg {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      display: none;
+    }
+
 textarea {
   resize: vertical;
 }
 
-button {
-  background: #189de4;
+#submitBtn{
+  background-color: #00b71d;
   color: white;
-  border: none;
+}
+
+#submitBtn:hover{
+  background-color: #028f18;
+  transform: translateY(-2px);
   cursor: pointer;
-  transition: background 0.3s;
 }
 
-button:hover {
-  background: #0056b3;
+.cancel-btn {
+  background-color: white;
+  color: white;
 }
 
-#cancelBtn {
-  background: #6c757d;
-  display: none;
+.cancel-btn:hover{
+  background-color: red;
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: white;
+  color: white;
+}
+
+.edit-btn:hover{
+  background-color: yellow;
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+.delete-btn{
+  background-color: white;
+  color: white;
+}
+
+.delete-btn:hover{
+  background-color: red;
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+.save-btn{
+  background-color: white;
+  color: white;
+}
+
+.save-btn:hover{
+  background-color: blue;
+  transform: translateY(-2px);
+  cursor: pointer;
 }
 
 #msg {
