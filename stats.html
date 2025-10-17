@@ -15,6 +15,21 @@
 
   <!-- External Styles -->
   <link rel="stylesheet" href="css/stats.css">
+  <style>
+    /* Spinner Style */
+    .spinner {
+      border: 5px solid #eee;
+      border-top: 5px solid gray;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      margin: auto;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
   <div id="container">
@@ -44,7 +59,14 @@
                 <th>Oct</th><th>Nov</th><th>Dec</th><th>Jan</th><th>Feb</th><th>Mar</th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="tableBody">
+              <!-- 🔄 Spinner row will show until data loads -->
+              <tr id="spinnerRow">
+                <td colspan="15" style="text-align:center; padding:20px;">
+                  <div class="spinner"></div>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -74,7 +96,7 @@
     // Populate table
     auth.onAuthStateChanged(async (user) => {
       if (!user) return window.location.href = "index.html";
-      const tableBody = document.querySelector("#monthlyBreakdown tbody");
+      const tableBody = document.querySelector("#tableBody");
 
       const counts = {};
       cataloguers.forEach(name => {
@@ -109,6 +131,10 @@
         });
       }
 
+      // ✅ Clear spinner row before inserting real data
+      document.getElementById("spinnerRow").style.display = "none";
+
+      // ✅ Add data rows
       cataloguers.forEach(name => {
         const init = counts[name].initial;
         const fin = counts[name].final;
@@ -147,45 +173,19 @@
       tableBody.innerHTML += totalRow;
     });
 
-    // ✅ New jsPDF AutoTable PDF Export (No Clipping, Crisp Output)
+    // ✅ Export PDF
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF('l', 'mm', 'a4');
-
-      // Add title
       doc.setFontSize(14);
       doc.text("QA Monthly Breakdown (Oct 2025 – Mar 2026)", 14, 15);
-
-      // Convert table to PDF
       doc.autoTable({
         html: '#monthlyBreakdown',
         startY: 25,
         theme: 'grid',
-        headStyles: {
-          fillColor: [0, 123, 255],
-          textColor: 255,
-          halign: 'center',
-          valign: 'middle',
-          lineWidth: 0.1
-        },
-        bodyStyles: {
-          halign: 'center',
-          valign: 'middle'
-        },
-        styles: {
-          fontSize: 8,
-          cellPadding: 3,
-          lineColor: [220, 220, 220]
-        },
-        margin: { left: 10, right: 10 },
-        tableWidth: 'auto',
-        didDrawPage: (data) => {
-          const pageCount = doc.internal.getNumberOfPages();
-          doc.setFontSize(8);
-          doc.text(`Page ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 10);
-        }
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [0, 123, 255], textColor: 255 }
       });
-
       doc.save('QA-Monthly-Breakdown.pdf');
     }
   </script>
