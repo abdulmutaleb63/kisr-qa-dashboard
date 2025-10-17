@@ -7,6 +7,20 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <style>
+    #msg {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div id="container">
@@ -16,42 +30,34 @@
       <form id="qaForm">
         <div class="form-row">
           <input type="text" id="hrid" placeholder="HRID" required />
-
-        <select id="cataloguer" required>
-          <option value="" disabled selected>Select Cataloguer</option>
-          <option value="Rania">Rania</option>
-          <option value="Ahmad">Ahmad</option>
-        </select>
-
-          <input type="date" id="dateIn" placeholder="Date In" required />
+          <select id="cataloguer" required>
+            <option value="" disabled selected>Select Cataloguer</option>
+            <option value="Rania">Rania</option>
+            <option value="Ahmad">Ahmad</option>
+          </select>
+          <input type="date" id="dateIn" required />
         </div>
-
         <div class="form-row">
           <input type="text" id="errorFields" placeholder="Error fields (e.g. 245, 700)" />
           <textarea id="errorDescription" placeholder="Error Description"></textarea>
         </div>
-
         <div class="form-row">
-          <input type="date" id="dateOut" placeholder="Date Out" />
+          <input type="date" id="dateOut" />
           <select id="status">
             <option value="" disabled selected>Status</option>
             <option value="Ok">Ok</option>
             <option value="Rejected">Rejected</option>
           </select>
-
-          <!-- ✅ QA dropdown -->
           <select id="qa" required>
             <option value="" disabled selected>Select QA'er</option>
             <option value="Mutaleb">Mutaleb</option>
             <option value="Aziz">Aziz</option>
           </select>
         </div>
-
         <div class="form-row">
           <button type="button" id="submitBtn" onclick="submitEntry()">Submit</button>
           <button type="button" id="cancelBtn" onclick="cancelEdit()">Cancel</button>
         </div>
-        <p id="msg"></p>
       </form>
 
       <h3>Submitted Entries</h3>
@@ -71,21 +77,16 @@
           </tr>
         </thead>
         <tbody id="spinnerRow">
-  <tr>
-    <td colspan="10">
-      <div class="spinner-container">
-        <div class="spinner"></div>
-      </div>
-    </td>
-  </tr>
-</tbody>
-<tbody id="entryBody"></tbody>
+          <tr><td colspan="10"><div class="spinner-container"><div class="spinner"></div></div></td></tr>
+        </tbody>
+        <tbody id="entryBody"></tbody>
       </table>
     </div>
   </div>
 
+  <div id="msg"></div>
+
 <script>
-  // Load sidebar
   fetch('sidebar.html')
     .then(res => res.text())
     .then(html => document.getElementById('sidebar').innerHTML = html);
@@ -101,7 +102,13 @@
 
   let editingId = null;
 
-  // ✅ Auto-set today's date for dateIn/dateOut
+  function showMsg(text, duration = 2500) {
+    const msg = document.getElementById('msg');
+    msg.textContent = text;
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', duration);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateIn').value = today;
@@ -113,18 +120,14 @@
       window.location.href = 'index.html';
       return;
     }
-
-    // ✅ Auto-set QA dropdown based on user email
-    const qaSelect = document.getElementById("qa");
     const email = user.email.toLowerCase();
+    const qaSelect = document.getElementById("qa");
     if (email === "amaslamani@kisr.edu.kw") qaSelect.value = "Mutaleb";
     else if (email === "aabdulrazzaq@kisr.edu.kw") qaSelect.value = "Aziz";
-
     loadEntries();
   });
 
   async function submitEntry() {
-    const msg = document.getElementById('msg');
     const data = {
       hrid: document.getElementById("hrid").value.trim(),
       cataloguer: document.getElementById("cataloguer").value.trim(),
@@ -135,25 +138,21 @@
       status: document.getElementById("status").value,
       qa: document.getElementById("qa").value
     };
-
     try {
       if (editingId) {
         await db.collection("initial_checks").doc(editingId).update(data);
-        msg.textContent = "✅ Entry updated!";
+        showMsg("✅ Entry updated!");
         editingId = null;
         document.getElementById("submitBtn").textContent = "Submit";
         document.getElementById("cancelBtn").style.display = "none";
       } else {
-        await db.collection("initial_checks").add({
-          ...data,
-          createdAt: new Date()
-        });
-        msg.textContent = "✅ Entry added!";
+        await db.collection("initial_checks").add({ ...data, createdAt: new Date() });
+        showMsg("✅ Entry added!");
       }
       clearForm();
       loadEntries();
     } catch (err) {
-      msg.textContent = "❌ Error: " + err.message;
+      showMsg("❌ Error: " + err.message);
     }
   }
 
@@ -162,92 +161,106 @@
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateIn').value = today;
     document.getElementById('dateOut').value = today;
-
-    // Keep QA default based on login
     if (auth.currentUser) {
       const email = auth.currentUser.email.toLowerCase();
-      if (email === "amaslamani@kisr.edu.kw") document.getElementById("qa").value = "Mutaleb";
-      else if (email === "aabdulrazzaq@kisr.edu.kw") document.getElementById("qa").value = "Aziz";
+      document.getElementById("qa").value = email === "amaslamani@kisr.edu.kw" ? "Mutaleb" : "Aziz";
     }
   }
 
-async function loadEntries() {
-  const spinnerRow = document.getElementById('spinnerRow');
-  const tbody = document.getElementById('entryBody');
+  async function loadEntries() {
+    const spinnerRow = document.getElementById('spinnerRow');
+    const tbody = document.getElementById('entryBody');
+    spinnerRow.style.display = '';
+    tbody.innerHTML = '';
+    const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
+    let index = snap.size;
+    spinnerRow.style.display = 'none';
 
-  // Show spinner, clear old entries
-  spinnerRow.style.display = '';
-  tbody.innerHTML = '';
+    const formatDate = (str) => {
+      if (!str) return "";
+      const [y, m, d] = str.split("-");
+      return `${d}/${m}/${y}`;
+    };
 
-  const snap = await db.collection("initial_checks").orderBy("createdAt", "desc").get();
-  let index = snap.size;
-
-  // Hide spinner after loading
-  spinnerRow.style.display = 'none';
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "";
-    const [year, month, day] = dateStr.split("-");
-    return `${day}/${month}/${year}`;
-  };
-
-  snap.forEach(doc => {
-    const d = doc.data();
-    const row = `
-      <tr>
+    snap.forEach(doc => {
+      const d = doc.data();
+      const row = document.createElement("tr");
+      row.setAttribute("data-id", doc.id);
+      row.innerHTML = `
         <td>${index--}</td>
         <td>${d.hrid || ""}</td>
         <td>${d.cataloguer || ""}</td>
-        <td>${formatDate(d.dateIn) || ""}</td>
+        <td>${formatDate(d.dateIn)}</td>
         <td>${d.errorFields || ""}</td>
         <td>${d.errorDescription || ""}</td>
-        <td>${formatDate(d.dateOut) || ""}</td>
+        <td>${formatDate(d.dateOut)}</td>
         <td>${d.status || ""}</td>
         <td>${d.qa || ""}</td>
         <td class="actions">
-          <button onclick="editEntry('${doc.id}')">✏️</button>
-          <button onclick="deleteEntry('${doc.id}')">🗑️</button>
-        </td>
-      </tr>`;
-    tbody.innerHTML += row;
-  });
-}
-    
+          <button class="edit-btn">✏️</button>
+          <button class="delete-btn">🗑️</button>
+        </td>`;
+      tbody.appendChild(row);
+    });
+  }
 
-  async function deleteEntry(id) {
-    if (confirm("Delete this entry?")) {
-      await db.collection("initial_checks").doc(id).delete();
-      loadEntries();
+  document.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("edit-btn")) {
+      const row = e.target.closest("tr");
+      const id = row.dataset.id;
+      const cells = row.querySelectorAll("td");
+
+      for (let i = 1; i <= 8; i++) {
+        let val = cells[i].innerText.trim();
+        if ((i === 3 || i === 6) && val.includes("/")) {
+          const [d, m, y] = val.split("/");
+          val = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+        }
+        cells[i].innerHTML = `<input type="text" value="${val}" style="width:100%">`;
+      }
+
+      const actions = row.querySelector(".actions");
+      actions.innerHTML = `
+        <button class="save-btn">💾</button>
+        <button class="cancel-btn">❌</button>`;
+
+      actions.querySelector(".save-btn").addEventListener("click", async () => {
+        const inputs = row.querySelectorAll("input");
+        const fields = ["hrid", "cataloguer", "dateIn", "errorFields", "errorDescription", "dateOut", "status", "qa"];
+        const updated = {};
+        fields.forEach((f, i) => {
+          let val = inputs[i].value.trim();
+          if ((f === "dateIn" || f === "dateOut") && val.includes("/")) {
+            const [d, m, y] = val.split("/");
+            val = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+          }
+          updated[f] = val;
+        });
+
+        try {
+          await db.collection("initial_checks").doc(id).update(updated);
+          showMsg("✅ Entry updated!");
+          loadEntries();
+        } catch (err) {
+          showMsg("❌ Failed to update: " + err.message);
+        }
+      });
+
+      actions.querySelector(".cancel-btn").addEventListener("click", () => {
+        loadEntries();
+        showMsg("Edit cancelled.");
+      });
     }
-  }
 
-  async function editEntry(id) {
-    const doc = await db.collection("initial_checks").doc(id).get();
-    if (!doc.exists) return;
-    const d = doc.data();
-
-    document.getElementById("hrid").value = d.hrid || "";
-    document.getElementById("cataloguer").value = d.cataloguer || "";
-    document.getElementById("dateIn").value = d.dateIn || "";
-    document.getElementById("errorFields").value = d.errorFields || "";
-    document.getElementById("errorDescription").value = d.errorDescription || "";
-    document.getElementById("dateOut").value = d.dateOut || "";
-    document.getElementById("status").value = d.status || "Ok";
-    document.getElementById("qa").value = d.qa || "";
-
-    editingId = id;
-    document.getElementById("submitBtn").textContent = "Update";
-    document.getElementById("cancelBtn").style.display = "inline-block";
-    document.getElementById("msg").textContent = "Editing entry...";
-  }
-
-  function cancelEdit() {
-    editingId = null;
-    clearForm();
-    document.getElementById("submitBtn").textContent = "Submit";
-    document.getElementById("cancelBtn").style.display = "none";
-    document.getElementById("msg").textContent = "Edit cancelled.";
-  }
+    if (e.target.classList.contains("delete-btn")) {
+      const id = e.target.closest("tr").dataset.id;
+      if (confirm("Delete this entry?")) {
+        await db.collection("initial_checks").doc(id).delete();
+        loadEntries();
+        showMsg("🗑️ Entry deleted.");
+      }
+    }
+  });
 </script>
 <script src="js/common.js"></script>
 </body>
