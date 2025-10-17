@@ -172,7 +172,7 @@
     spinnerRow.style.display = "";
     tbody.innerHTML = "";
 
-    const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").limit(50).get();
+    const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").get();
     let index = snapshot.size;
     spinnerRow.style.display = "none";
 
