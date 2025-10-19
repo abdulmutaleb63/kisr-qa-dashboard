@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Final QA Check</title>
@@ -7,8 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
-
- 
 </head>
 
 <body>
@@ -55,229 +54,259 @@
       </form>
 
       <h3>Submitted Entries</h3>
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>Entry No.</th>
-            <th>HRID</th>
-            <th>Cataloguer</th>
-            <th>Date In</th>
-            <th>Error Fields</th>
-            <th>Error Description</th>
-            <th>Date Out</th>
-            <th>Status</th>
-            <th>UUID</th>
-            <th>Title</th>
-            <th>QA</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="spinnerRow">
-          <tr>
-            <td colspan="12">
-              <div class="spinner-container">
-                <div class="spinner"></div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-        <tbody id="entryBody"></tbody>
-      </table>
+
+      <!-- Wrap table in scrollable div -->
+      <div id="tableWrapper" style="overflow-x: auto;">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Entry No.</th>
+              <th>HRID</th>
+              <th>Cataloguer</th>
+              <th>Date In</th>
+              <th>Error Fields</th>
+              <th>Error Description</th>
+              <th>Date Out</th>
+              <th>Status</th>
+              <th>UUID</th>
+              <th>Title</th>
+              <th>QA</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="spinnerRow">
+            <tr>
+              <td colspan="12">
+                <div class="spinner-container">
+                  <div class="spinner"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody id="entryBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <div id="msg"></div>
 
-<script>
-  // ✅ Load sidebar
-  fetch("sidebar.html")
-    .then(res => res.text())
-    .then(html => document.getElementById("sidebar").innerHTML = html);
+  <!-- Floating Scrollbar -->
+  <div id="scrollSyncWrapper">
+    <div id="scrollSyncContent"></div>
+  </div>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
-    authDomain: "kisr-qa-dashboard.firebaseapp.com",
-    projectId: "kisr-qa-dashboard"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+  <script>
+    fetch("sidebar.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("sidebar").innerHTML = html);
 
-  let editingId = null;
-
-  // ✅ Toast-style message
-  function showMsg(text, duration = 2500) {
-    const msg = document.getElementById('msg');
-    msg.textContent = text;
-    msg.style.display = 'block';
-    setTimeout(() => msg.style.display = 'none', duration);
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dateIn').value = today;
-    document.getElementById('dateOut').value = today;
-  });
-
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = "index.html";
-      return;
-    }
-    const qaSelect = document.getElementById("qa");
-    const email = user.email.toLowerCase();
-    if (email === "amaslamani@kisr.edu.kw") qaSelect.value = "Mutaleb";
-    else if (email === "aabdulrazzaq@kisr.edu.kw") qaSelect.value = "Aziz";
-
-    loadEntries();
-  });
-
-  async function submitEntry() {
-    const data = {
-      hrid: document.getElementById("hrid").value.trim(),
-      cataloguer: document.getElementById("cataloguer").value.trim(),
-      dateIn: document.getElementById("dateIn").value,
-      errorFields: document.getElementById("errorFields").value.trim(),
-      errorDescription: document.getElementById("errorDescription").value.trim(),
-      dateOut: document.getElementById("dateOut").value,
-      status: document.getElementById("status").value,
-      uuid: document.getElementById("uuid").value.trim(),
-      title: document.getElementById("title").value.trim(),
-      qa: document.getElementById("qa").value
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvwfziFOkb-j0Hbc7Ff-MOBfxpNs7q2TI",
+      authDomain: "kisr-qa-dashboard.firebaseapp.com",
+      projectId: "kisr-qa-dashboard"
     };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    try {
-      if (editingId) {
-        await db.collection("final_checks").doc(editingId).update(data);
-        showMsg("✅ Entry updated!");
-        editingId = null;
-      } else {
-        await db.collection("final_checks").add({ ...data, createdAt: new Date() });
-        showMsg("✅ Entry added!");
-      }
-      clearForm();
-      loadEntries();
-    } catch (err) {
-      showMsg("❌ Error: " + err.message);
+    let editingId = null;
+
+    function showMsg(text, duration = 2500) {
+      const msg = document.getElementById('msg');
+      msg.textContent = text;
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', duration);
     }
-  }
 
-  function clearForm() {
-    document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dateIn').value = today;
-    document.getElementById('dateOut').value = today;
-    const user = auth.currentUser;
-    if (user) {
-      const email = user.email.toLowerCase();
-      document.getElementById("qa").value =
-        email === "amaslamani@kisr.edu.kw" ? "Mutaleb" : "Aziz";
-    }
-  }
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dateIn').value = today;
+      document.getElementById('dateOut').value = today;
 
-  async function loadEntries() {
-    const spinnerRow = document.getElementById("spinnerRow");
-    const tbody = document.getElementById("entryBody");
-    spinnerRow.style.display = "";
-    tbody.innerHTML = "";
+      // Floating scrollbar sync logic
+      const tableWrapper = document.getElementById('tableWrapper');
+      const scrollSyncWrapper = document.getElementById('scrollSyncWrapper');
+      const scrollSyncContent = document.getElementById('scrollSyncContent');
 
-    const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").get();
-    let index = snapshot.size;
-    spinnerRow.style.display = "none";
-
-    const formatDate = (val) => {
-      if (!val) return "";
-      if (val.includes("-")) {
-        const [y, m, d] = val.split("-");
-        return `${d}/${m}/${y}`;
+      function syncWidths() {
+        scrollSyncContent.style.width = tableWrapper.scrollWidth + 'px';
       }
-      return val;
-    };
 
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const row = document.createElement("tr");
-      row.setAttribute("data-id", doc.id);
-      row.innerHTML = `
-        <td>${index--}</td>
-        <td>${d.hrid || ""}</td>
-        <td>${d.cataloguer || ""}</td>
-        <td>${formatDate(d.dateIn)}</td>
-        <td>${d.errorFields || ""}</td>
-        <td>${d.errorDescription || ""}</td>
-        <td>${formatDate(d.dateOut)}</td>
-        <td>${d.status || ""}</td>
-        <td>${d.uuid || ""}</td>
-        <td>${d.title || ""}</td>
-        <td>${d.qa || ""}</td>
-        <td class="actions">
-          <button class="edit-btn">✏️</button>
-          <button class="delete-btn">🗑️</button>
-        </td>`;
-      tbody.appendChild(row);
+      // Resize check in case table renders late
+      setTimeout(syncWidths, 1000);
+
+      syncWidths();
+      window.addEventListener('resize', syncWidths);
+
+      scrollSyncWrapper.addEventListener('scroll', () => {
+        tableWrapper.scrollLeft = scrollSyncWrapper.scrollLeft;
+      });
+
+      tableWrapper.addEventListener('scroll', () => {
+        scrollSyncWrapper.scrollLeft = tableWrapper.scrollLeft;
+      });
     });
-  }
 
-  // ✅ Inline editing logic with message alerts
-  document.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("edit-btn")) {
-      const row = e.target.closest("tr");
-      const id = row.dataset.id;
-      const cells = row.querySelectorAll("td");
-
-      for (let i = 1; i <= 10; i++) {
-        let val = cells[i].innerText.trim();
-        if ((i === 3 || i === 6) && val.includes("/")) {
-          const [d, m, y] = val.split("/");
-          val = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        }
-        cells[i].innerHTML = `<input type="text" value="${val}" style="width:100%">`;
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
       }
+      const qaSelect = document.getElementById("qa");
+      const email = user.email.toLowerCase();
+      if (email === "amaslamani@kisr.edu.kw") qaSelect.value = "Mutaleb";
+      else if (email === "aabdulrazzaq@kisr.edu.kw") qaSelect.value = "Aziz";
 
-      const actions = row.querySelector(".actions");
-      actions.innerHTML = `
-        <button class="save-btn">💾</button>
-        <button class="cancel-btn">❌</button>`;
+      loadEntries();
+    });
 
-      actions.querySelector(".save-btn").addEventListener("click", async () => {
-        const inputs = row.querySelectorAll("input");
-        const fields = ["hrid","cataloguer","dateIn","errorFields","errorDescription","dateOut","status","uuid","title","qa"];
-        const updated = {};
-        fields.forEach((f, i) => {
-          let val = inputs[i].value.trim();
-          if ((f === "dateIn" || f === "dateOut") && val.includes("/")) {
+    async function submitEntry() {
+      const data = {
+        hrid: document.getElementById("hrid").value.trim(),
+        cataloguer: document.getElementById("cataloguer").value.trim(),
+        dateIn: document.getElementById("dateIn").value,
+        errorFields: document.getElementById("errorFields").value.trim(),
+        errorDescription: document.getElementById("errorDescription").value.trim(),
+        dateOut: document.getElementById("dateOut").value,
+        status: document.getElementById("status").value,
+        uuid: document.getElementById("uuid").value.trim(),
+        title: document.getElementById("title").value.trim(),
+        qa: document.getElementById("qa").value
+      };
+
+      try {
+        if (editingId) {
+          await db.collection("final_checks").doc(editingId).update(data);
+          showMsg("✅ Entry updated!");
+          editingId = null;
+        } else {
+          await db.collection("final_checks").add({ ...data, createdAt: new Date() });
+          showMsg("✅ Entry added!");
+        }
+        clearForm();
+        loadEntries();
+      } catch (err) {
+        showMsg("❌ Error: " + err.message);
+      }
+    }
+
+    function clearForm() {
+      document.querySelectorAll("input, textarea, select").forEach(el => el.value = "");
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dateIn').value = today;
+      document.getElementById('dateOut').value = today;
+      const user = auth.currentUser;
+      if (user) {
+        const email = user.email.toLowerCase();
+        document.getElementById("qa").value =
+          email === "amaslamani@kisr.edu.kw" ? "Mutaleb" : "Aziz";
+      }
+    }
+
+    async function loadEntries() {
+      const spinnerRow = document.getElementById("spinnerRow");
+      const tbody = document.getElementById("entryBody");
+      spinnerRow.style.display = "";
+      tbody.innerHTML = "";
+
+      const snapshot = await db.collection("final_checks").orderBy("createdAt", "desc").get();
+      let index = snapshot.size;
+      spinnerRow.style.display = "none";
+
+      const formatDate = (val) => {
+        if (!val) return "";
+        if (val.includes("-")) {
+          const [y, m, d] = val.split("-");
+          return `${d}/${m}/${y}`;
+        }
+        return val;
+      };
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const row = document.createElement("tr");
+        row.setAttribute("data-id", doc.id);
+        row.innerHTML = `
+          <td>${index--}</td>
+          <td>${d.hrid || ""}</td>
+          <td>${d.cataloguer || ""}</td>
+          <td>${formatDate(d.dateIn)}</td>
+          <td>${d.errorFields || ""}</td>
+          <td>${d.errorDescription || ""}</td>
+          <td>${formatDate(d.dateOut)}</td>
+          <td>${d.status || ""}</td>
+          <td>${d.uuid || ""}</td>
+          <td>${d.title || ""}</td>
+          <td>${d.qa || ""}</td>
+          <td class="actions">
+            <button class="edit-btn">✏️</button>
+            <button class="delete-btn">🗑️</button>
+          </td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("edit-btn")) {
+        const row = e.target.closest("tr");
+        const id = row.dataset.id;
+        const cells = row.querySelectorAll("td");
+
+        for (let i = 1; i <= 10; i++) {
+          let val = cells[i].innerText.trim();
+          if ((i === 3 || i === 6) && val.includes("/")) {
             const [d, m, y] = val.split("/");
-            val = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+            val = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
           }
-          updated[f] = val;
+          cells[i].innerHTML = `<input type="text" value="${val}" style="width:100%">`;
+        }
+
+        const actions = row.querySelector(".actions");
+        actions.innerHTML = `
+          <button class="save-btn">💾</button>
+          <button class="cancel-btn">❌</button>`;
+
+        actions.querySelector(".save-btn").addEventListener("click", async () => {
+          const inputs = row.querySelectorAll("input");
+          const fields = ["hrid", "cataloguer", "dateIn", "errorFields", "errorDescription", "dateOut", "status", "uuid", "title", "qa"];
+          const updated = {};
+          fields.forEach((f, i) => {
+            let val = inputs[i].value.trim();
+            if ((f === "dateIn" || f === "dateOut") && val.includes("/")) {
+              const [d, m, y] = val.split("/");
+              val = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+            updated[f] = val;
+          });
+
+          try {
+            await db.collection("final_checks").doc(id).update(updated);
+            showMsg("✅ Entry updated!");
+            loadEntries();
+          } catch (err) {
+            showMsg("❌ Failed to update: " + err.message);
+          }
         });
 
-        try {
-          await db.collection("final_checks").doc(id).update(updated);
-          showMsg("✅ Entry updated!");
+        actions.querySelector(".cancel-btn").addEventListener("click", () => {
           loadEntries();
-        } catch (err) {
-          showMsg("❌ Failed to update: " + err.message);
-        }
-      });
-
-      actions.querySelector(".cancel-btn").addEventListener("click", () => {
-        loadEntries();
-        showMsg("Edit cancelled.");
-      });
-    }
-
-    if (e.target.classList.contains("delete-btn")) {
-      const id = e.target.closest("tr").dataset.id;
-      if (confirm("Delete this entry?")) {
-        await db.collection("final_checks").doc(id).delete();
-        loadEntries();
-        showMsg("🗑️ Entry deleted.");
+          showMsg("Edit cancelled.");
+        });
       }
-    }
-  });
-</script>
 
-<script src="js/common.js"></script>
+      if (e.target.classList.contains("delete-btn")) {
+        const id = e.target.closest("tr").dataset.id;
+        if (confirm("Delete this entry?")) {
+          await db.collection("final_checks").doc(id).delete();
+          loadEntries();
+          showMsg("🗑️ Entry deleted.");
+        }
+      }
+    });
+  </script>
+
+  <script src="js/common.js"></script>
 </body>
+
 </html>
