@@ -195,3 +195,38 @@ th:nth-child(5), td:nth-child(5) { width: 120px; }  /* Error Fields */
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+#scrollSyncWrapper {
+  position: fixed;
+  bottom: 0;
+  left: 220px; /* sidebar width */
+  right: 0;
+  height: 20px;
+  background: #f3f3f3;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 9999;
+  display: none;
+}
+
+#scrollSyncContent {
+  height: 1px;
+}
+
+/* Allow dragging scrollbar easier */
+#scrollSyncWrapper::-webkit-scrollbar {
+  height: 12px;
+}
+#scrollSyncWrapper::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+#scrollSyncWrapper::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+@media (min-width: 1024px) {
+  #scrollSyncWrapper {
+    display: block;
+  }
+}
